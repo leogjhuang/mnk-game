@@ -181,76 +181,81 @@ class CPU(Player):
         return random.choice(legal_moves)
 
 
-# Initializes variables for running the game
-play = True
-symbols = ["X", "O"]
-players = []
+class Game:
+    # Initializes variables for running the game
+    play = True
+    symbols = ["X", "O"]
+    players = []
 
-# Initializes game prompts and messages
-length_prompt = "What length would you like your board to be (2 to 10)? "
-width_prompt = "What width would you like your board to be (2 to 10)? "
-mode_prompt = "How many players will be playing (1 or 2)? "
-name_prompt = "What would you like your name to be? "
-difficulty_prompt = "What difficulty would you like to choose (1 or 2)? "
-play_again_prompt = "Would you like to play again (yes or no)? "
-end_message = "Thanks for playing!"
+    # Initializes game prompts and messages
+    length_prompt = "What length would you like your board to be (2 to 10)? "
+    width_prompt = "What width would you like your board to be (2 to 10)? "
+    mode_prompt = "How many players will be playing (1 or 2)? "
+    name_prompt = "What would you like your name to be? "
+    difficulty_prompt = "What difficulty would you like to choose (1 or 2)? "
+    play_again_prompt = "Would you like to play again (yes or no)? "
+    end_message = "Thanks for playing!"
 
-# Asks the user for the size of the board and the number of local players
-length = validate_input(length_prompt, int, range(2, 11))
-width = validate_input(width_prompt, int, range(2, 11))
-player_count = validate_input(mode_prompt, int, [1, 2])
+    # Asks the user for the size of the board and the number of local players
+    length = validate_input(length_prompt, int, range(2, 11))
+    width = validate_input(width_prompt, int, range(2, 11))
+    player_count = validate_input(mode_prompt, int, [1, 2])
 
-# Asks the user for the name(s) of the local player(s); creates local player object(s)
-for player_index in range(player_count):
-    print(f"Player {player_index + 1}: ", end="")
-    player_name = validate_input(name_prompt, str)
-    print(f"Player {player_index + 1} is now {player_name}.")
-    players.append(Local(player_name, symbols[player_index]))
+    # Asks the user for the name(s) of the local player(s); creates local player object(s)
+    for player_index in range(player_count):
+        print(f"Player {player_index + 1}: ", end="")
+        player_name = validate_input(name_prompt, str)
+        print(f"Player {player_index + 1} is now {player_name}.")
+        players.append(Local(player_name, symbols[player_index]))
 
-# Asks the user for the difficulty of the CPU player if there is only one player; creates CPU player object
-if player_count == 1:
-    cpu_difficulty = validate_input(difficulty_prompt, int, [1, 2])
-    players.append(CPU(cpu_difficulty, symbols[1], symbols[0]))
-    print(f"Player 2 is now {players[1].name}.")
+    # Asks the user for the difficulty of the CPU player if there is only one player; creates CPU player object
+    if player_count == 1:
+        cpu_difficulty = validate_input(difficulty_prompt, int, [1, 2])
+        players.append(CPU(cpu_difficulty, symbols[1], symbols[0]))
+        print(f"Player 2 is now {players[1].name}.")
 
-# Loops until user chooses not to play again
-while play:
-    # Randomly determines which player's turn is first
-    round_count = random.randint(1, 2)
-    game_board = Grid(length, width)
-    print(game_board)
-
-    # Loops until the game is finished either due to a win or a tie
-    while True:
-        # Determines which player's turn it is this round
-        round_count += 1
-        current_player = players[round_count % 2]
-
-        # Updates the game board based on the position that the current player chooses
-        position_row, position_column = current_player.take_turn(game_board)
-        game_board.cells[position_row][position_column] = current_player.symbol
+    # Loops until user chooses not to play again
+    while play:
+        # Randomly determines which player's turn is first
+        round_count = random.randint(1, 2)
+        game_board = Grid(length, width)
         print(game_board)
 
-        # Exits the game loop and update records if a win has occurred
-        if game_board.check_win(position_row, position_column):
-            print(visual_separator(f"{current_player.name} wins!"))
-            current_player.update_record("win")
-            players[1 - round_count % 2].update_record("loss")
-            break
+        # Loops until the game is finished either due to a win or a tie
+        while True:
+            # Determines which player's turn it is this round
+            round_count += 1
+            current_player = players[round_count % 2]
 
-        # Exits the game loop and update records if a tie has occurred
-        elif game_board.check_tie():
-            print(visual_separator("Game ends in a tie!"))
-            current_player.update_record("tie")
-            players[1 - round_count % 2].update_record("tie")
-            break
+            # Updates the game board based on the position that the current player chooses
+            position_row, position_column = current_player.take_turn(game_board)
+            game_board.cells[position_row][position_column] = current_player.symbol
+            print(game_board)
 
-    # Saves and displays players' records after the game is finished
-    for player in players:
-        player.save_record()
-        player.display_record()
+            # Exits the game loop and update records if a win has occurred
+            if game_board.check_win(position_row, position_column):
+                print(visual_separator(f"{current_player.name} wins!"))
+                current_player.update_record("win")
+                players[1 - round_count % 2].update_record("loss")
+                break
 
-    # Asks the user whether they would like to play again
-    play = validate_input(visual_separator(play_again_prompt), str.lower, ["yes", "no"]) == "yes"
+            # Exits the game loop and update records if a tie has occurred
+            elif game_board.check_tie():
+                print(visual_separator("Game ends in a tie!"))
+                current_player.update_record("tie")
+                players[1 - round_count % 2].update_record("tie")
+                break
 
-print(visual_separator(end_message))
+        # Saves and displays players' records after the game is finished
+        for player in players:
+            player.save_record()
+            player.display_record()
+
+        # Asks the user whether they would like to play again
+        play = validate_input(visual_separator(play_again_prompt), str.lower, ["yes", "no"]) == "yes"
+
+    print(visual_separator(end_message))
+
+
+if __name__ == "__main__":
+    game = Game()
