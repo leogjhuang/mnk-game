@@ -44,9 +44,10 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
 
 class Grid:
     # Initializes grid's rows and columns; creates a two-dimensional list of blank cells
-    def __init__(self, column_count, row_count):
+    def __init__(self, column_count, row_count, consecutive_win_length):
         self.columns = range(column_count)
         self.rows = range(row_count)
+        self.win_length = consecutive_win_length
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
     # Overloads string representation of grid object; returns the grid's cells in text format
