@@ -63,41 +63,135 @@ class Grid:
 
     # Checks if each element of a row, column, or diagonal has been occupied by a player's symbol; returns true or false
     def check_win(self, row_index, column_index):
-        horizontal = [self.cells[row_index][column] for column in self.columns]
-        if horizontal.count(self.cells[row_index][0]) == self.columns.stop:
-            return True
-        vertical = [self.cells[row][column_index] for row in self.rows]
-        if vertical.count(self.cells[0][column_index]) == self.rows.stop:
-            return True
-        if self.rows == self.columns:
-            if row_index == column_index:
-                left_diagonal = [self.cells[index][index] for index in self.rows]
-                if left_diagonal.count(self.cells[0][0]) == self.rows.stop:
-                    return True
-            elif row_index + column_index + 1 == self.rows.stop:
-                right_diagonal = [self.cells[index][self.rows.stop - 1 - index] for index in self.rows]
-                if right_diagonal.count(self.cells[0][self.rows.stop - 1]) == self.rows.stop:
-                    return True
-        return False
+        return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
+                    self.is_diagonal_win(row_index, column_index)])
     
     # Checks if each element of a row has been occupied by a player's symbol; returns true or false
     def is_horizontal_win(self, row_index, column_index):
         horizontal = []
-        left_end = False
-        right_end = False
+        left_end_reached = False
+        right_end_reached = False
+        for i in range(self.win_length - 1):
+            if not left_end_reached:
+                if row_index - i < 0:
+                    left_end_reached = True
+                else:
+                    square = self.cells[row_index - i][column_index]
+                    if square == " ":
+                        left_end_reached = True
+                    else:
+                        horizontal.insert(0, square)
+            if not right_end_reached:
+                if row_index + i > self.rows.stop - 1:
+                    right_end_reached = True
+                else:
+                    square = self.cells[row_index + i][column_index]
+                    if square == " ":
+                        right_end_reached = True
+                    else:
+                        horizontal.append(square)
+            if left_end_reached and right_end_reached:
+                return False
+        for i in range(len(horizontal) - self.win_length + 1):
+            sequence = [horizontal[j] for j in range(i, i + self.win_length)]
+            if all(element == sequence[0] for element in sequence):
+                return True
+        return False
     
     # Checks if each element of a column has been occupied by a player's symbol; returns true or false
     def is_vertical_win(self, row_index, column_index):
         vertical = []
-        left_end = False
-        right_end = False
+        left_end_reached = False
+        right_end_reached = False
+        for i in range(self.win_length - 1):
+            if not left_end_reached:
+                if column_index - i < 0:
+                    left_end_reached = True
+                else:
+                    square = self.cells[row_index][column_index - i]
+                    if square == " ":
+                        left_end_reached = True
+                    else:
+                        vertical.insert(0, square)
+            if not right_end_reached:
+                if column_index + i > self.columns.stop - 1:
+                    right_end_reached = True
+                else:
+                    square = self.cells[row_index][column_index + i]
+                    if square == " ":
+                        right_end_reached = True
+                    else:
+                        vertical.append(square)
+            if left_end_reached and right_end_reached:
+                return False
+        for i in range(len(vertical) - self.win_length + 1):
+            sequence = [vertical[j] for j in range(i, i + self.win_length)]
+            if all(element == sequence[0] for element in sequence):
+                return True
+        return False
 
     # Checks if each element of a diagonal has been occupied by a player's symbol; returns true or false
     def is_diagonal_win(self, row_index, column_index):
-        left_diagonal = []
-        right_diagonal = []
-        left_end = False
-        right_end = False
+        if self.rows == self.columns:
+            if row_index == column_index:
+                left_diagonal = []
+                left_end_reached = False
+                right_end_reached = False
+                for i in range(self.win_length - 1):
+                    if not left_end_reached:
+                        if row_index - i < 0:
+                            left_end_reached = True
+                        else:
+                            square = self.cells[row_index - i][column_index - i]
+                            if square == " ":
+                                left_end_reached = True
+                            else:
+                                left_diagonal.insert(0, square)
+                    if not right_end_reached:
+                        if row_index + i > self.rows.stop - 1:
+                            right_end_reached = True
+                        else:
+                            square = self.cells[row_index + i][column_index + i]
+                            if square == " ":
+                                right_end_reached = True
+                            else:
+                                left_diagonal.append(square)
+                    if left_end_reached and right_end_reached:
+                        return False
+                for i in range(len(left_diagonal) - self.win_length + 1):
+                    sequence = [left_diagonal[j] for j in range(i, i + self.win_length)]
+                    if all(element == sequence[0] for element in sequence):
+                        return True
+            elif row_index + column_index + 1 == self.rows.stop:
+                right_diagonal = []
+                left_end_reached = False
+                right_end_reached = False
+                for i in range(self.win_length - 1):
+                    if not left_end_reached:
+                        if row_index - i < 0:
+                            left_end_reached = True
+                        else:
+                            square = self.cells[row_index - i][column_index - i]
+                            if square == " ":
+                                left_end_reached = True
+                            else:
+                                right_diagonal.insert(0, square)
+                    if not right_end_reached:
+                        if row_index + i > self.rows.stop - 1:
+                            right_end_reached = True
+                        else:
+                            square = self.cells[row_index + i][column_index + i]
+                            if square == " ":
+                                right_end_reached = True
+                            else:
+                                right_diagonal.append(square)
+                    if left_end_reached and right_end_reached:
+                        return False
+                for i in range(len(right_diagonal) - self.win_length + 1):
+                    sequence = [right_diagonal[j] for j in range(i, i + self.win_length)]
+                    if all(element == sequence[0] for element in sequence):
+                        return True
+        return False
     
     # Checks if each element of the grid has been occupied, i.e., a tie has occurred; returns true or false
     def check_tie(self):
