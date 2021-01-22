@@ -94,7 +94,10 @@ class Grid:
 
     # Checks if each element of a diagonal has been occupied by a player's symbol; returns true or false
     def is_diagonal_win(self, row_index, column_index):
-        pass
+        left_diagonal = []
+        right_diagonal = []
+        left_end = False
+        right_end = False
     
     # Checks if each element of the grid has been occupied, i.e., a tie has occurred; returns true or false
     def check_tie(self):
