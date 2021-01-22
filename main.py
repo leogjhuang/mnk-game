@@ -44,10 +44,10 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
 
 class Grid:
     # Initializes grid's rows and columns; creates a two-dimensional list of blank cells
-    def __init__(self, column_count, row_count, consecutive_win_length):
+    def __init__(self, column_count, row_count, consecutive_length):
         self.columns = range(column_count)
         self.rows = range(row_count)
-        self.win_length = consecutive_win_length
+        self.win_length = consecutive_length
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
     # Overloads string representation of grid object; returns the grid's cells in text format
@@ -208,8 +208,9 @@ class Game:
     players = []
 
     # Initializes game prompts and messages
-    length_prompt = "What length would you like your board to be (2 to 10)? "
+    height_prompt = "What height would you like your board to be (2 to 10)? "
     width_prompt = "What width would you like your board to be (2 to 10)? "
+    win_length_prompt = "What win length would you like? "
     mode_prompt = "How many players will be playing (1 or 2)? "
     name_prompt = "What would you like your name to be? "
     difficulty_prompt = "What difficulty would you like to choose (1 or 2)? "
@@ -217,8 +218,9 @@ class Game:
     end_message = "Thanks for playing!"
 
     # Asks the user for the size of the board and the number of local players
-    length = validate_input(length_prompt, int, range(2, 11))
+    height = validate_input(height_prompt, int, range(2, 11))
     width = validate_input(width_prompt, int, range(2, 11))
+    win_length = validate_input(win_length_prompt, int, range(2, min(height, width)))
     player_count = validate_input(mode_prompt, int, [1, 2])
 
     # Asks the user for the name(s) of the local player(s); creates local player object(s)
@@ -238,7 +240,7 @@ class Game:
     while play:
         # Randomly determines which player's turn is first
         round_count = random.randint(1, 2)
-        game_board = Grid(length, width)
+        game_board = Grid(height, width, win_length)
         print(game_board)
 
         # Loops until the game is finished either due to a win or a tie
