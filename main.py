@@ -78,6 +78,10 @@ class Grid:
                 if right_diagonal.count(self.cells[0][self.rows.stop - 1]) == self.rows.stop:
                     return True
         return False
+    
+    # Checks if each element of a row has been occupied by a player's symbol; returns true or false
+    def is_horizontal_win(self, row_index, column_index):
+        pass
 
     # Checks if each element of the grid has been occupied, i.e., a tie has occurred; returns true or false
     def check_tie(self):
