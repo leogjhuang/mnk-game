@@ -88,7 +88,9 @@ class Grid:
     
     # Checks if each element of a column has been occupied by a player's symbol; returns true or false
     def is_vertical_win(self, row_index, column_index):
-        pass
+        vertical = []
+        left_end = False
+        right_end = False
 
     # Checks if each element of a diagonal has been occupied by a player's symbol; returns true or false
     def is_diagonal_win(self, row_index, column_index):
