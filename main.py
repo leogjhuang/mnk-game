@@ -74,7 +74,7 @@ class Grid:
         horizontal = []
         left_end_reached = False
         right_end_reached = False
-        for i in range(self.win_length - 1):
+        for i in range(self.win_length):
             if not left_end_reached:
                 if row_index - i < 0:
                     left_end_reached = True
@@ -104,7 +104,7 @@ class Grid:
         vertical = []
         left_end_reached = False
         right_end_reached = False
-        for i in range(self.win_length - 1):
+        for i in range(self.win_length):
             if not left_end_reached:
                 if column_index - i < 0:
                     left_end_reached = True
@@ -136,7 +136,7 @@ class Grid:
                 left_diagonal = []
                 left_end_reached = False
                 right_end_reached = False
-                for i in range(self.win_length - 1):
+                for i in range(self.win_length):
                     if not left_end_reached:
                         if row_index - i < 0:
                             left_end_reached = True
@@ -164,7 +164,7 @@ class Grid:
                 right_diagonal = []
                 left_end_reached = False
                 right_end_reached = False
-                for i in range(self.win_length - 1):
+                for i in range(self.win_length):
                     if not left_end_reached:
                         if row_index - i < 0:
                             left_end_reached = True
