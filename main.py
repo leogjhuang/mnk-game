@@ -2,7 +2,7 @@ import random
 
 
 # Check if an input meets a set of criteria; return validated input
-def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_=None, max_=None):
+def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_=None, max_=None, condition=None):
     if range_ is not None and not range_:
         raise ValueError("argument for 'range_' is an empty sequence")
     if min_ is not None and max_ is not None and min_ > max_:
@@ -95,6 +95,8 @@ class Grid:
                         horizontal.append(square)
             if left_end_reached and right_end_reached:
                 break
+        if len(horizontal) < self.win_length:
+            return False
         return self.has_consecutive_identical_elements(horizontal)
     
     # Return true if each element of a column has been occupied by a player's symbol
@@ -123,6 +125,8 @@ class Grid:
                         vertical.append(square)
             if left_end_reached and right_end_reached:
                 break
+        if len(vertical) < self.win_length:
+            return False
         return self.has_consecutive_identical_elements(vertical)
 
     # Return true if each element of a diagonal has been occupied by a player's symbol
@@ -153,6 +157,8 @@ class Grid:
                                 left_diagonal.append(square)
                     if left_end_reached and right_end_reached:
                         break
+                if len(left_diagonal) < self.win_length:
+                    return False
                 return self.has_consecutive_identical_elements(left_diagonal)
             elif row_index + column_index + 1 == self.rows.stop:
                 right_diagonal = []
@@ -179,6 +185,8 @@ class Grid:
                                 right_diagonal.append(square)
                     if left_end_reached and right_end_reached:
                         break
+                if len(right_diagonal) < self.win_length:
+                    return False
                 return self.has_consecutive_identical_elements(right_diagonal)
         return False
 
@@ -295,7 +303,7 @@ class Game:
     MIN_LOCAL_PLAYERS = 1
     MAX_LOCAL_PLAYERS = 2
     MAX_TOTAL_PLAYERS = 2
-    LATIN_CHARACTERS = [chr(code_point) for code_point in range(33, 127)]
+    LATIN_CHARACTERS = [chr(code_point) for code_point in range(32, 127)]
     SYMBOL_DEFAULTS = ["X", "O"]
     CPU_LEVELS = ["easy", "hard"]
     PLAY_AGAIN_OPTIONS = ["yes", "no"]
