@@ -1,14 +1,6 @@
 import random
 
 
-# Add visual separator to a string for improved readability; return updated string
-def visual_separator(message=None):
-    separator = "".join("=" for _ in range(42))
-    if message is not None:
-        return "\n".join((separator, message))
-    return separator
-
-
 # Check if an input meets a set of criteria; return validated input
 def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_=None, max_=None):
     if range_ is not None and not range_:
@@ -42,6 +34,14 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
             return input_
 
 
+# Add visual separator to a string for improved readability; return updated string
+def visual_separator(message=None):
+    separator = "".join("=" for _ in range(42))
+    if message is not None:
+        return "\n".join((separator, message))
+    return separator
+
+
 class Grid:
     # Initialize grid's rows and columns; create a two-dimensional list of blank cells
     def __init__(self, column_count, row_count, consecutive_win_length):
@@ -53,16 +53,16 @@ class Grid:
     # Overload string representation of grid object; return the grid's cells in text format
     def __str__(self):
         lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"\t{row + 1}\n" for row in self.rows]
-        gridlines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_indices = "\n" + "   ".join(str(column + 1) for column in self.columns)
-        return "\n" + gridlines.join(lines) + column_indices
+        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        column_indices = "   ".join(str(column + 1) for column in self.columns)
+        return "\n".join((splits.join(lines), column_indices))
 
     # Return a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
     def legal_moves(self):
         return [(row, column) for column in self.columns for row in self.rows if self.cells[row][column] == " "]
 
-    # Check if there is a consecutive subsequence of symbols in a sequence required for a win
-    def has_consecutive_win_length(self, sequence):
+    # Return true if there is a consecutive subsequence of symbols required for a win in a sequence
+    def has_consecutive_identical_elements(self, sequence):
         for i in range(len(sequence) - self.win_length + 1):
             subsequence = [sequence[j] for j in range(i, i + self.win_length)]
             if all(element == subsequence[0] for element in subsequence):
@@ -95,7 +95,7 @@ class Grid:
                         horizontal.append(square)
             if left_end_reached and right_end_reached:
                 break
-        return self.has_consecutive_win_length(horizontal)
+        return self.has_consecutive_identical_elements(horizontal)
     
     # Check if each element of a column has been occupied by a player's symbol; return true or false
     def is_vertical_win(self, row_index, column_index):
@@ -123,7 +123,7 @@ class Grid:
                         vertical.append(square)
             if left_end_reached and right_end_reached:
                 break
-        return self.has_consecutive_win_length(vertical)
+        return self.has_consecutive_identical_elements(vertical)
 
     # Check if each element of a diagonal has been occupied by a player's symbol; return true or false
     def is_diagonal_win(self, row_index, column_index):
@@ -153,7 +153,7 @@ class Grid:
                                 left_diagonal.append(square)
                     if left_end_reached and right_end_reached:
                         break
-                return self.has_consecutive_win_length(left_diagonal)
+                return self.has_consecutive_identical_elements(left_diagonal)
             elif row_index + column_index + 1 == self.rows.stop:
                 right_diagonal = []
                 left_end_reached = False
@@ -179,7 +179,7 @@ class Grid:
                                 right_diagonal.append(square)
                     if left_end_reached and right_end_reached:
                         break
-                return self.has_consecutive_win_length(right_diagonal)
+                return self.has_consecutive_identical_elements(right_diagonal)
         return False
 
     # Check if each element of a row, column, or diagonal has been occupied by a player's symbol; return true or false
@@ -267,7 +267,7 @@ class CPU(Player):
                 for column in grid.columns:
                     if (row, column) in legal_moves:
                         grid.cells[row][column] = self.symbol
-                        if grid.check_win(row, column):
+                        if grid.has_victory(row, column):
                             return row, column
                         else:
                             grid.cells[row][column] = " "
@@ -276,7 +276,7 @@ class CPU(Player):
                 for column in grid.columns:
                     if (row, column) in legal_moves:
                         grid.cells[row][column] = self.opponent_symbol
-                        if grid.check_win(row, column):
+                        if grid.has_victory(row, column):
                             return row, column
                         else:
                             grid.cells[row][column] = " "
