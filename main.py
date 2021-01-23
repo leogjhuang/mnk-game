@@ -97,7 +97,7 @@ class Grid:
                 break
         return self.has_consecutive_identical_elements(horizontal)
     
-    # Check if each element of a column has been occupied by a player's symbol; return true or false
+    # Return true if each element of a column has been occupied by a player's symbol
     def is_vertical_win(self, row_index, column_index):
         vertical = []
         left_end_reached = False
