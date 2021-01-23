@@ -19,7 +19,7 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
             print(f"Input must be less than or equal to {max_}.")
         elif min_ is not None and input_ < min_:
             print(f"Input must be greater than or equal to {min_}.")
-        if range_ is not None and input_ not in range_:
+        elif range_ is not None and input_ not in range_:
             if isinstance(range_, range):
                 print(f"Input must be between {range_.start} and {range_.stop - 1}.")
             else:
@@ -52,7 +52,7 @@ class Grid:
 
     # Overload string representation of grid object; return the grid's cells in text format
     def __str__(self):
-        lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"\t{row + 1}\n" for row in self.rows]
+        lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"  {row + 1}\n" for row in self.rows]
         splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
         column_indices = "   ".join(str(column + 1) for column in self.columns)
         return "\n".join((splits.join(lines), column_indices))
@@ -63,48 +63,19 @@ class Grid:
 
     # Return true if there is a consecutive subsequence of symbols required for a win in a sequence
     def has_consecutive_identical_elements(self, sequence):
-        for i in range(len(sequence) - self.win_length + 1):
-            subsequence = [sequence[j] for j in range(i, i + self.win_length)]
-            if all(element == subsequence[0] for element in subsequence):
-                return True
+        if len(sequence) >= self.win_length:
+            for i in range(len(sequence) - self.win_length + 1):
+                subsequence = [sequence[j] for j in range(i, i + self.win_length)]
+                if all(element == subsequence[0] for element in subsequence):
+                    return True
         return False
-
+    
     # Return true if each element of a row has been occupied by a player's symbol
     def is_horizontal_win(self, row_index, column_index):
-        horizontal = []
+        horizontal = [self.cells[row_index][column_index]]
         left_end_reached = False
         right_end_reached = False
-        for i in range(self.win_length):
-            if not left_end_reached:
-                if row_index - i < 0:
-                    left_end_reached = True
-                else:
-                    square = self.cells[row_index - i][column_index]
-                    if square == " ":
-                        left_end_reached = True
-                    else:
-                        horizontal.insert(0, square)
-            if not right_end_reached:
-                if row_index + i > self.rows.stop - 1:
-                    right_end_reached = True
-                else:
-                    square = self.cells[row_index + i][column_index]
-                    if square == " ":
-                        right_end_reached = True
-                    else:
-                        horizontal.append(square)
-            if left_end_reached and right_end_reached:
-                break
-        if len(horizontal) < self.win_length:
-            return False
-        return self.has_consecutive_identical_elements(horizontal)
-    
-    # Return true if each element of a column has been occupied by a player's symbol
-    def is_vertical_win(self, row_index, column_index):
-        vertical = []
-        left_end_reached = False
-        right_end_reached = False
-        for i in range(self.win_length):
+        for i in range(1, self.win_length):
             if not left_end_reached:
                 if column_index - i < 0:
                     left_end_reached = True
@@ -113,7 +84,7 @@ class Grid:
                     if square == " ":
                         left_end_reached = True
                     else:
-                        vertical.insert(0, square)
+                        horizontal.insert(0, square)
             if not right_end_reached:
                 if column_index + i > self.columns.stop - 1:
                     right_end_reached = True
@@ -122,21 +93,47 @@ class Grid:
                     if square == " ":
                         right_end_reached = True
                     else:
+                        horizontal.append(square)
+            if left_end_reached and right_end_reached:
+                break
+        return self.has_consecutive_identical_elements(horizontal)
+
+    # Return true if each element of a column has been occupied by a player's symbol
+    def is_vertical_win(self, row_index, column_index):
+        vertical = [self.cells[row_index][column_index]]
+        left_end_reached = False
+        right_end_reached = False
+        for i in range(1, self.win_length):
+            if not left_end_reached:
+                if row_index - i < 0:
+                    left_end_reached = True
+                else:
+                    square = self.cells[row_index - i][column_index]
+                    if square == " ":
+                        left_end_reached = True
+                    else:
+                        vertical.insert(0, square)
+            if not right_end_reached:
+                if row_index + i > self.rows.stop - 1:
+                    right_end_reached = True
+                else:
+                    square = self.cells[row_index + i][column_index]
+                    if square == " ":
+                        right_end_reached = True
+                    else:
                         vertical.append(square)
             if left_end_reached and right_end_reached:
                 break
-        if len(vertical) < self.win_length:
-            return False
         return self.has_consecutive_identical_elements(vertical)
 
     # Return true if each element of a diagonal has been occupied by a player's symbol
     def is_diagonal_win(self, row_index, column_index):
         if self.rows == self.columns:
             if row_index == column_index:
-                left_diagonal = []
+                left_diagonal = [self.cells[row_index][column_index]]
                 left_end_reached = False
                 right_end_reached = False
-                for i in range(self.win_length):
+                for i in range(1, self.win_length):
                     if not left_end_reached:
                         if row_index - i < 0:
                             left_end_reached = True
@@ -157,14 +154,12 @@ class Grid:
                                 left_diagonal.append(square)
                     if left_end_reached and right_end_reached:
                         break
-                if len(left_diagonal) < self.win_length:
-                    return False
                 return self.has_consecutive_identical_elements(left_diagonal)
-            elif row_index + column_index + 1 == self.rows.stop:
-                right_diagonal = []
+            if row_index + column_index + 1 == self.rows.stop:
+                right_diagonal = [self.cells[row_index][column_index]]
                 left_end_reached = False
                 right_end_reached = False
-                for i in range(self.win_length):
+                for i in range(1, self.win_length):
                     if not left_end_reached:
                         if row_index - i < 0:
                             left_end_reached = True
@@ -185,8 +180,6 @@ class Grid:
                                 right_diagonal.append(square)
                     if left_end_reached and right_end_reached:
                         break
-                if len(right_diagonal) < self.win_length:
-                    return False
                 return self.has_consecutive_identical_elements(right_diagonal)
         return False
 
