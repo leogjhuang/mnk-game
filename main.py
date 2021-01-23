@@ -348,18 +348,25 @@ class Game:
             else:
                 player_type = "CPU"
                 player_subclass = CPU
-                level_default = player_index
                 level_options = "  ".join(f"[{i}] {self.CPU_LEVELS[i]}" for i in range(len(self.CPU_LEVELS)))
-                level_prompt = f"Set the level of {player_type} player ({level_options}; default is {level_default})"
-                player_level = validate_input(level_prompt, int, range(len(level_options))) or level_default
+                level_prompt = f"Set the level of {player_type} player ({level_options}): "
+                player_level = validate_input(level_prompt, int, range(len(self.CPU_LEVELS)))
 
             name_default = f"Player {player_index + 1}"
             name_prompt = f"Set the name of {player_type} player (default is '{name_default}'): "
-            player_name = validate_input(name_prompt, str) or name_default
+            while True:
+                player_name = validate_input(name_prompt, str) or name_default
+                if player_name not in [player.name for player in self.players]:
+                    break
+                print("This name has already been taken.")
 
             symbol_default = self.SYMBOL_DEFAULTS[player_index]
             symbol_prompt = f"Set the symbol of {player_type} player (default is '{symbol_default}'): "
-            player_symbol = validate_input(symbol_prompt, str, self.LATIN_CHARACTERS) or symbol_default
+            while True:
+                player_symbol = validate_input(symbol_prompt, str, self.LATIN_CHARACTERS) or symbol_default
+                if player_symbol not in [player.symbol for player in self.players]:
+                    break
+                print("This symbol has already been taken.")
 
             self.players.append(player_subclass(player_level, player_name, player_symbol))
 
