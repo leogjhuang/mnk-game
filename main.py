@@ -125,7 +125,7 @@ class Grid:
                 break
         return self.has_consecutive_identical_elements(vertical)
 
-    # Check if each element of a diagonal has been occupied by a player's symbol; return true or false
+    # Return true if each element of a diagonal has been occupied by a player's symbol
     def is_diagonal_win(self, row_index, column_index):
         if self.rows == self.columns:
             if row_index == column_index:
