@@ -50,9 +50,9 @@ class Grid:
         self.win_length = consecutive_win_length
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
-    # Return a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
-    def legal_moves(self):
-        return [(row, column) for column in self.columns for row in self.rows if self.cells[row][column] == " "]
+    # Reset each cell in the grid to empty
+    def reset(self):
+        self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
     # Return true if there is a consecutive subsequence of symbols required for a win in a sequence
     def has_consecutive_identical_elements(self, sequence):
@@ -190,23 +190,6 @@ class Grid:
         return True
 
 
-class GravityEnabled(Grid):
-    # Initialize gravity-enabled grid with the inherited constructor from the 'Grid' class
-    def __init__(self, column_count, row_count, consecutive_win_length):
-        super().__init__(column_count, row_count, consecutive_win_length)
-
-    # Overload string representation of grid object with column indices; return the grid's cells in text format
-    def __str__(self):
-        lines = [" | ".join(self.cells[row][column] for column in self.columns) for row in self.rows]
-        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_indices = "   ".join(str(column + 1) for column in self.columns)
-        return "\n".join((splits.join(lines), column_indices))
-
-    # Add symbol to a column such that it falls to the bottom of the grid according to gravity
-    def add_symbol(self):
-        pass
-
-
 class GravityDisabled(Grid):
     # Initialize gravity-disabled grid with the inherited constructor from the 'Grid' class
     def __init__(self, column_count, row_count, consecutive_win_length):
@@ -220,8 +203,38 @@ class GravityDisabled(Grid):
         return "\n".join((splits.join(lines), column_indices))
 
     # Add symbol to a cell with the given row_index and column_index
-    def add_symbol(self):
-        pass
+    def add_symbol(self, row_index, column_index, symbol):
+        self.cells[row_index][column_index] = symbol
+        return row_index, column_index
+
+    # Return a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
+    def legal_moves(self):
+        return [(row, column) for column in self.columns for row in self.rows if self.cells[row][column] == " "]
+
+
+class GravityEnabled(Grid):
+    # Initialize gravity-enabled grid with the inherited constructor from the 'Grid' class
+    def __init__(self, column_count, row_count, consecutive_win_length):
+        super().__init__(column_count, row_count, consecutive_win_length)
+
+    # Overload string representation of grid object with column indices; return the grid's cells in text format
+    def __str__(self):
+        lines = [" | ".join(self.cells[row][column] for column in self.columns) for row in self.rows]
+        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        column_indices = "   ".join(str(column + 1) for column in self.columns)
+        return "\n".join((splits.join(lines), column_indices))
+
+    # Add symbol to a column such that it falls to the bottom of the grid according to gravity
+    def add_symbol(self, column_index, symbol):
+        for row_index in self.rows:
+            if self.cells[self.rows.stop - row_index - 1][column_index] == " ":
+                self.cells[self.rows.stop - row_index - 1][column_index] = symbol
+                return self.rows.stop - row_index - 1, column_index
+
+    # Return a list containing the column index of column that have a blank top cell
+    def legal_moves(self):
+        return [column for column in self.columns if self.cells[0][column] == " "]
+
 
 class Player:
     # Initialize player's name and symbol; load record from player file if it exists
@@ -268,13 +281,18 @@ class Local(Player):
         legal_moves = grid.legal_moves()
         print(visual_separator(f"{self.name}'s turn"))
         while True:
-            row_prompt = "Enter the row you would like to select: "
-            column_prompt = "Enter the column you would like to select: "
-            row = validate_input(row_prompt, int, [row_index + 1 for row_index in grid.rows]) - 1
-            column = validate_input(column_prompt, int, [column_index + 1 for column_index in grid.columns]) - 1
-            if (row, column) in legal_moves:
-                return row, column
+            row_prompt = f"Enter the row you want to select ({grid.rows.start + 1}-{grid.rows.stop}): "
+            column_prompt = f"Enter the column you want to select ({grid.columns.start + 1}-{grid.columns.stop}): "
+            if isinstance(grid, GravityEnabled):
+                column = validate_input(column_prompt, int, [column_index + 1 for column_index in grid.columns]) - 1
+                if column in legal_moves:
+                    return column
+                print("The column you selected is full.")
             else:
+                row = validate_input(row_prompt, int, [row_index + 1 for row_index in grid.rows]) - 1
+                column = validate_input(column_prompt, int, [column_index + 1 for column_index in grid.columns]) - 1
+                if (row, column) in legal_moves:
+                    return row, column
                 print("The cell you selected is occupied.")
 
 
@@ -319,6 +337,7 @@ class CPU(Player):
 class Game:
     MIN_HEIGHT = MIN_WIDTH = MIN_WIN_LENGTH = 3
     MAX_HEIGHT = MAX_WIDTH = 9
+    GRAVITY_OPTIONS = ["disabled", "enabled"]
     MIN_LOCAL_PLAYERS = 1
     MAX_LOCAL_PLAYERS = 2
     MAX_TOTAL_PLAYERS = 2
@@ -356,6 +375,12 @@ class Game:
         upper_bound = max(self.board_height, self.board_width)
         win_length_prompt = f"Set length of consecutive symbols required to win ({lower_bound}-{upper_bound}): "
         return validate_input(win_length_prompt, int, range(lower_bound, upper_bound + 1))
+
+    # Ask the user for the the gravity option for the board
+    def set_board_gravity(self):
+        gravity_options = "  ".join(f"[{i}] {self.GRAVITY_OPTIONS[i]}" for i in range(len(self.GRAVITY_OPTIONS)))
+        gravity_prompt = f"Set the gravity option for the board ({gravity_options}): "
+        return validate_input(gravity_prompt, int, range(len(self.GRAVITY_OPTIONS)))
 
     # Ask the user for the number of local players
     def set_local_player_count(self):
@@ -423,12 +448,11 @@ class Game:
                 current_player = self.players[round_count % 2]
 
                 # Update the game board based on the position that the current player chooses
-                position_row, position_column = current_player.take_turn(self.board)
-                self.board.cells[position_row][position_column] = current_player.symbol
+                row, column = self.board.add_symbol(current_player.take_turn(self.board), current_player.symbol)
                 print(self.board)
 
                 # Exit the game loop and update records if a win has occurred
-                if self.board.has_victory(position_row, position_column):
+                if self.board.has_victory(row, column):
                     print(visual_separator(f"{current_player.name} wins!"))
                     current_player.update_record("win")
                     self.players[1 - round_count % 2].update_record("loss")
