@@ -43,19 +43,12 @@ def visual_separator(message=None):
 
 
 class Grid:
-    # Initialize grid's rows and columns; create a two-dimensional list of blank cells
+    # Initialize grid's rows, columns, and win length; create a two-dimensional list of blank cells
     def __init__(self, column_count, row_count, consecutive_win_length):
-        self.columns = range(column_count)
         self.rows = range(row_count)
+        self.columns = range(column_count)
         self.win_length = consecutive_win_length
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
-
-    # Overload string representation of grid object; return the grid's cells in text format
-    def __str__(self):
-        lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"  {row + 1}\n" for row in self.rows]
-        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_indices = "   ".join(str(column + 1) for column in self.columns)
-        return "\n".join((splits.join(lines), column_indices))
 
     # Return a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
     def legal_moves(self):
@@ -196,6 +189,39 @@ class Grid:
                     return False
         return True
 
+
+class GravityEnabled(Grid):
+    # Initialize gravity-enabled grid with the inherited constructor from the 'Grid' class
+    def __init__(self, column_count, row_count, consecutive_win_length):
+        super().__init__(column_count, row_count, consecutive_win_length)
+
+    # Overload string representation of grid object with column indices; return the grid's cells in text format
+    def __str__(self):
+        lines = [" | ".join(self.cells[row][column] for column in self.columns) for row in self.rows]
+        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        column_indices = "   ".join(str(column + 1) for column in self.columns)
+        return "\n".join((splits.join(lines), column_indices))
+
+    # Add symbol to a column such that it falls to the bottom of the grid according to gravity
+    def add_symbol(self):
+        pass
+
+
+class GravityDisabled(Grid):
+    # Initialize gravity-disabled grid with the inherited constructor from the 'Grid' class
+    def __init__(self, column_count, row_count, consecutive_win_length):
+        super().__init__(column_count, row_count, consecutive_win_length)
+
+    # Overload string representation of grid object with column and row indices; return the grid's cells in text format
+    def __str__(self):
+        lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"  {row + 1}\n" for row in self.rows]
+        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        column_indices = "   ".join(str(column + 1) for column in self.columns)
+        return "\n".join((splits.join(lines), column_indices))
+
+    # Add symbol to a cell with the given row_index and column_index
+    def add_symbol(self):
+        pass
 
 class Player:
     # Initialize player's name and symbol; load record from player file if it exists
