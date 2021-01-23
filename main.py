@@ -182,7 +182,7 @@ class Grid:
                 return self.has_consecutive_identical_elements(right_diagonal)
         return False
 
-    # Check if each element of a row, column, or diagonal has been occupied by a player's symbol; return true or false
+    # Return true if each element of a row, column, or diagonal has been occupied by a player's symbol
     def has_victory(self, row_index, column_index):
         return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
                     self.is_diagonal_win(row_index, column_index)])
