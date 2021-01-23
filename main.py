@@ -2,7 +2,7 @@ import random
 
 
 # Check if an input meets a set of criteria; return validated input
-def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_=None, max_=None, condition=None):
+def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_=None, max_=None):
     if range_ is not None and not range_:
         raise ValueError("argument for 'range_' is an empty sequence")
     if min_ is not None and max_ is not None and min_ > max_:
@@ -15,6 +15,10 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
             except ValueError:
                 print(f"Input type must be {type_.__name__}.")
                 continue
+        if max_ is not None and input_ > max_:
+            print(f"Input must be less than or equal to {max_}.")
+        elif min_ is not None and input_ < min_:
+            print(f"Input must be greater than or equal to {min_}.")
         if range_ is not None and input_ not in range_:
             if isinstance(range_, range):
                 print(f"Input must be between {range_.start} and {range_.stop - 1}.")
@@ -26,10 +30,6 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
                     elements[-1] = " ".join(("or", elements[-1]))
                     selection = ", ".join(elements)
                 print(f"Input must be {selection}.")
-        elif min_ is not None and input_ < min_:
-            print(f"Input must be greater than or equal to {min_}.")
-        elif max_ is not None and input_ > max_:
-            print(f"Input must be less than or equal to {max_}.")
         else:
             return input_
 
@@ -299,11 +299,11 @@ class CPU(Player):
 
 class Game:
     MIN_HEIGHT = MIN_WIDTH = MIN_WIN_LENGTH = 3
-    MAX_HEIGHT = MAX_WIDTH = 15
+    MAX_HEIGHT = MAX_WIDTH = 9
     MIN_LOCAL_PLAYERS = 1
     MAX_LOCAL_PLAYERS = 2
     MAX_TOTAL_PLAYERS = 2
-    LATIN_CHARACTERS = [chr(code_point) for code_point in range(32, 127)]
+    LATIN_CHARACTERS = [chr(code_point) for code_point in range(33, 127)] + [""]
     SYMBOL_DEFAULTS = ["X", "O"]
     CPU_LEVELS = ["easy", "hard"]
     PLAY_AGAIN_OPTIONS = ["yes", "no"]
