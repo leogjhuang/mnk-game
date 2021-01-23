@@ -187,7 +187,7 @@ class Grid:
         return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
                     self.is_diagonal_win(row_index, column_index)])
     
-    # Check if each element of the grid has been occupied, i.e., a tie has occurred; return true or false
+    # Return true if each element of the grid has been occupied, i.e., a tie has occurred
     def is_full(self):
         for row in self.rows:
             for column in self.columns:
