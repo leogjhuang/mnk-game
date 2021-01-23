@@ -219,13 +219,13 @@ class GravityEnabled(Grid):
 
     # Overload string representation of grid object with column indices; return the grid's cells in text format
     def __str__(self):
-        lines = [" | ".join(self.cells[row][column] for column in self.columns) for row in self.rows]
+        lines = [" | ".join(self.cells[row][column] for column in self.columns) + "\n" for row in self.rows]
         splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
         column_indices = "   ".join(str(column + 1) for column in self.columns)
         return "\n".join((splits.join(lines), column_indices))
 
     # Add symbol to a column such that it falls to the bottom of the grid according to gravity
-    def add_symbol(self, column_index, symbol):
+    def add_symbol(self, _, column_index, symbol):
         for row_index in self.rows:
             if self.cells[self.rows.stop - row_index - 1][column_index] == " ":
                 self.cells[self.rows.stop - row_index - 1][column_index] = symbol
@@ -233,7 +233,12 @@ class GravityEnabled(Grid):
 
     # Return a list containing the column index of column that have a blank top cell
     def legal_moves(self):
-        return [column for column in self.columns if self.cells[0][column] == " "]
+        legal_moves = []
+        for column_index in self.columns:
+            for row_index in self.rows:
+                if self.cells[self.rows.stop - row_index - 1][column_index] == " ":
+                    legal_moves.append((self.rows.stop - row_index - 1, column_index))
+        return legal_moves
 
 
 class Player:
@@ -285,8 +290,8 @@ class Local(Player):
             column_prompt = f"Enter the column you want to select ({grid.columns.start + 1}-{grid.columns.stop}): "
             if isinstance(grid, GravityEnabled):
                 column = validate_input(column_prompt, int, [column_index + 1 for column_index in grid.columns]) - 1
-                if column in legal_moves:
-                    return column
+                if column in [position[1] for position in legal_moves]:
+                    return 0, column
                 print("The column you selected is full.")
             else:
                 row = validate_input(row_prompt, int, [row_index + 1 for row_index in grid.rows]) - 1
@@ -337,24 +342,22 @@ class CPU(Player):
 class Game:
     MIN_HEIGHT = MIN_WIDTH = MIN_WIN_LENGTH = 3
     MAX_HEIGHT = MAX_WIDTH = 9
-    GRAVITY_OPTIONS = ["disabled", "enabled"]
+    GRAVITY_MODES = ["disabled", "enabled"]
+    BOARD_MODES = ["custom", "tic-tac-toe", "Connect Four", "Gomoku"]
+    BOARD_MODES_SETTINGS = [None, (3, 3, 3, 0), (6, 7, 4, 1), (9, 9, 5, 0)]
     MIN_LOCAL_PLAYERS = 1
     MAX_LOCAL_PLAYERS = 2
     MAX_TOTAL_PLAYERS = 2
     LATIN_CHARACTERS = [chr(code_point) for code_point in range(33, 127)] + [""]
     SYMBOL_DEFAULTS = ["X", "O"]
     CPU_LEVELS = ["easy", "hard"]
-    PLAY_AGAIN_OPTIONS = ["yes", "no"]
+    PLAY_AGAIN_MODES = ["yes", "no"]
 
     # Initialize game variables
     def __init__(self):
         self.play = True
         self.players = []
-        self.height = self.set_board_height()
-        self.width = self.set_board_width()
-        self.win_length = self.set_win_length()
-        self.gravity_enabled = self.set_board_gravity()
-        self.board = self.set_board_properties()
+        self.board = self.set_board_options()
         self.local_player_count = self.set_local_player_count()
 
     # Ask the user for the height of the board
@@ -372,23 +375,33 @@ class Game:
         return validate_input(board_width_prompt, int, range(lower_bound, upper_bound + 1))
 
     # Ask the user for the length of consecutive symbols required to win
-    def set_win_length(self):
+    def set_win_length(self, board_height, board_width):
         lower_bound = self.MIN_WIN_LENGTH
-        upper_bound = max(self.height, self.width)
+        upper_bound = max(board_height, board_width)
         win_length_prompt = f"Set length of consecutive symbols required to win ({lower_bound}-{upper_bound}): "
         return validate_input(win_length_prompt, int, range(lower_bound, upper_bound + 1))
 
     # Ask the user for the the gravity option for the board
     def set_board_gravity(self):
-        gravity_options = "  ".join(f"[{i}] {self.GRAVITY_OPTIONS[i]}" for i in range(len(self.GRAVITY_OPTIONS)))
+        gravity_options = "  ".join(f"[{mode}] {self.GRAVITY_MODES[mode]}" for mode in range(len(self.GRAVITY_MODES)))
         gravity_prompt = f"Set the gravity option for the board ({gravity_options}): "
-        return validate_input(gravity_prompt, int, range(len(self.GRAVITY_OPTIONS)))
+        return validate_input(gravity_prompt, int, range(len(self.GRAVITY_MODES)))
 
     # Ask the user to set board properties
-    def set_board_properties(self):
-        if self.gravity_enabled:
-            return GravityEnabled(self.height, self.width, self.win_length)
-        return GravityDisabled(self.height, self.width, self.win_length)
+    def set_board_options(self):
+        board_options = "  ".join(f"[{mode}] {self.BOARD_MODES[mode]}" for mode in range(len(self.BOARD_MODES)))
+        board_prompt = f"Choose a preset or custom option for the board ({board_options}): "
+        mode = validate_input(board_prompt, int, range(len(self.BOARD_MODES)))
+        if self.BOARD_MODES[mode] == "custom":
+            height = self.set_board_height()
+            width = self.set_board_width()
+            win_length = self.set_win_length(height, width)
+            gravity_enabled = self.set_board_gravity()
+        else:
+            height, width, win_length, gravity_enabled = self.BOARD_MODES_SETTINGS[mode]
+        if gravity_enabled:
+            return GravityEnabled(height, width, win_length)
+        return GravityDisabled(height, width, win_length)
 
     # Ask the user for the number of local players
     def set_local_player_count(self):
@@ -407,7 +420,7 @@ class Game:
             else:
                 player_type = "CPU"
                 player_subclass = CPU
-                level_options = "  ".join(f"[{i}] {self.CPU_LEVELS[i]}" for i in range(len(self.CPU_LEVELS)))
+                level_options = "  ".join(f"[{mode}] {self.CPU_LEVELS[mode]}" for mode in range(len(self.CPU_LEVELS)))
                 level_prompt = f"Set the level of {player_type} player ({level_options}): "
                 player_level = validate_input(level_prompt, int, range(len(self.CPU_LEVELS)))
 
@@ -435,16 +448,31 @@ class Game:
             player.save_record()
             player.display_record()
 
+    # Exit game loop and update records if a win or tie has occurred
+    def game_finished(self, row_index, column_index, player, round_count):
+        if self.board.has_victory(row_index, column_index):
+            print(visual_separator(f"{player.name} wins!"))
+            player.update_record("win")
+            self.players[1 - round_count % 2].update_record("loss")
+            return True
+        elif self.board.is_full():
+            print(visual_separator("Game ends in a tie!"))
+            player.update_record("tie")
+            self.players[1 - round_count % 2].update_record("tie")
+            return True
+        return False
+
     # Ask the user whether they would like to play again
-    def set_replay_status(self):
-        play_again_prompt = f"{self.players[0].name}, would you like to play again? "
-        return validate_input(play_again_prompt, str.lower, self.PLAY_AGAIN_OPTIONS) == self.PLAY_AGAIN_OPTIONS[0]
+    def set_replay_status(self, player):
+        play_again_prompt = f"{player.name}, would you like to play again? "
+        return validate_input(play_again_prompt, str.lower, self.PLAY_AGAIN_MODES) == self.PLAY_AGAIN_MODES[0]
 
     # Loop until user chooses not to play again
     def run(self):
         self.initialize_players()
         while self.play:
             # Randomly determine which player's turn is first
+            self.board.reset()
             round_count = random.randint(1, 2)
             print(self.board)
 
@@ -455,25 +483,13 @@ class Game:
                 current_player = self.players[round_count % 2]
 
                 # Update the game board based on the position that the current player chooses
-                row, column = self.board.add_symbol(current_player.take_turn(self.board), current_player.symbol)
+                row, column = self.board.add_symbol(*current_player.take_turn(self.board), current_player.symbol)
                 print(self.board)
-
-                # Exit the game loop and update records if a win has occurred
-                if self.board.has_victory(row, column):
-                    print(visual_separator(f"{current_player.name} wins!"))
-                    current_player.update_record("win")
-                    self.players[1 - round_count % 2].update_record("loss")
-                    break
-
-                # Exit the game loop and update records if a tie has occurred
-                elif self.board.is_full():
-                    print(visual_separator("Game ends in a tie!"))
-                    current_player.update_record("tie")
-                    self.players[1 - round_count % 2].update_record("tie")
+                if self.game_finished(row, column, current_player, round_count):
                     break
 
             self.update_all_player_records()
-            self.play = self.set_replay_status()
+            self.play = self.set_replay_status(current_player)
 
 
 if __name__ == "__main__":
