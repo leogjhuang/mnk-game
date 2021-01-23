@@ -350,9 +350,11 @@ class Game:
     def __init__(self):
         self.play = True
         self.players = []
-        self.board_height = self.set_board_height()
-        self.board_width = self.set_board_width()
+        self.height = self.set_board_height()
+        self.width = self.set_board_width()
         self.win_length = self.set_win_length()
+        self.gravity_enabled = self.set_board_gravity()
+        self.board = self.set_board_properties()
         self.local_player_count = self.set_local_player_count()
 
     # Ask the user for the height of the board
@@ -372,7 +374,7 @@ class Game:
     # Ask the user for the length of consecutive symbols required to win
     def set_win_length(self):
         lower_bound = self.MIN_WIN_LENGTH
-        upper_bound = max(self.board_height, self.board_width)
+        upper_bound = max(self.height, self.width)
         win_length_prompt = f"Set length of consecutive symbols required to win ({lower_bound}-{upper_bound}): "
         return validate_input(win_length_prompt, int, range(lower_bound, upper_bound + 1))
 
@@ -381,6 +383,12 @@ class Game:
         gravity_options = "  ".join(f"[{i}] {self.GRAVITY_OPTIONS[i]}" for i in range(len(self.GRAVITY_OPTIONS)))
         gravity_prompt = f"Set the gravity option for the board ({gravity_options}): "
         return validate_input(gravity_prompt, int, range(len(self.GRAVITY_OPTIONS)))
+
+    # Ask the user to set board properties
+    def set_board_properties(self):
+        if self.gravity_enabled:
+            return GravityEnabled(self.height, self.width, self.win_length)
+        return GravityDisabled(self.height, self.width, self.win_length)
 
     # Ask the user for the number of local players
     def set_local_player_count(self):
@@ -436,7 +444,6 @@ class Game:
     def run(self):
         self.initialize_players()
         while self.play:
-            self.board = Grid(self.board_height, self.board_width, self.win_length)
             # Randomly determine which player's turn is first
             round_count = random.randint(1, 2)
             print(self.board)
