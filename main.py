@@ -69,7 +69,7 @@ class Grid:
                 return True
         return False
 
-    # Check if each element of a row has been occupied by a player's symbol; return true or false
+    # Return true if each element of a row has been occupied by a player's symbol
     def is_horizontal_win(self, row_index, column_index):
         horizontal = []
         left_end_reached = False
