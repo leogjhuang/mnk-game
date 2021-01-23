@@ -126,67 +126,67 @@ class Grid:
                 break
         return self.has_consecutive_identical_elements(vertical)
 
-    # Return true if each element of a diagonal has been occupied by a player's symbol
-    def is_diagonal_win(self, row_index, column_index):
-        if self.rows == self.columns:
-            if row_index == column_index:
-                left_diagonal = [self.cells[row_index][column_index]]
-                left_end_reached = False
-                right_end_reached = False
-                for i in range(1, self.win_length):
-                    if not left_end_reached:
-                        if row_index - i < 0:
-                            left_end_reached = True
-                        else:
-                            square = self.cells[row_index - i][column_index - i]
-                            if square == " ":
-                                left_end_reached = True
-                            else:
-                                left_diagonal.insert(0, square)
-                    if not right_end_reached:
-                        if row_index + i > self.rows.stop - 1:
-                            right_end_reached = True
-                        else:
-                            square = self.cells[row_index + i][column_index + i]
-                            if square == " ":
-                                right_end_reached = True
-                            else:
-                                left_diagonal.append(square)
-                    if left_end_reached and right_end_reached:
-                        break
-                return self.has_consecutive_identical_elements(left_diagonal)
-            if row_index + column_index + 1 == self.rows.stop:
-                right_diagonal = [self.cells[row_index][column_index]]
-                left_end_reached = False
-                right_end_reached = False
-                for i in range(1, self.win_length):
-                    if not left_end_reached:
-                        if row_index - i < 0:
-                            left_end_reached = True
-                        else:
-                            square = self.cells[row_index - i][column_index - i]
-                            if square == " ":
-                                left_end_reached = True
-                            else:
-                                right_diagonal.insert(0, square)
-                    if not right_end_reached:
-                        if row_index + i > self.rows.stop - 1:
-                            right_end_reached = True
-                        else:
-                            square = self.cells[row_index + i][column_index + i]
-                            if square == " ":
-                                right_end_reached = True
-                            else:
-                                right_diagonal.append(square)
-                    if left_end_reached and right_end_reached:
-                        break
-                return self.has_consecutive_identical_elements(right_diagonal)
-        return False
+    # Return true if each element of a left diagonal has been occupied by a player's symbol
+    def is_left_diagonal_win(self, row_index, column_index):
+        left_diagonal = [self.cells[row_index][column_index]]
+        left_end_reached = False
+        right_end_reached = False
+        for i in range(1, self.win_length):
+            if not left_end_reached:
+                if row_index - i < 0 or column_index - i < 0:
+                    left_end_reached = True
+                else:
+                    square = self.cells[row_index - i][column_index - i]
+                    if square == " ":
+                        left_end_reached = True
+                    else:
+                        left_diagonal.insert(0, square)
+            if not right_end_reached:
+                if row_index + i > self.rows.stop - 1 or column_index + i > self.columns.stop - 1:
+                    right_end_reached = True
+                else:
+                    square = self.cells[row_index + i][column_index + i]
+                    if square == " ":
+                        right_end_reached = True
+                    else:
+                        left_diagonal.append(square)
+            if left_end_reached and right_end_reached:
+                break
+        return self.has_consecutive_identical_elements(left_diagonal)
+
+    # Return true if each element of a left diagonal has been occupied by a player's symbol
+    def is_right_diagonal_win(self, row_index, column_index):
+        right_diagonal = [self.cells[row_index][column_index]]
+        left_end_reached = False
+        right_end_reached = False
+        for i in range(1, self.win_length):
+            if not left_end_reached:
+                if row_index + i > self.rows.stop - 1 or column_index - i < 0:
+                    left_end_reached = True
+                else:
+                    square = self.cells[row_index + i][column_index - i]
+                    if square == " ":
+                        left_end_reached = True
+                    else:
+                        right_diagonal.insert(0, square)
+            if not right_end_reached:
+                if row_index - i < 0 or column_index + i > self.columns.stop - 1:
+                    right_end_reached = True
+                else:
+                    square = self.cells[row_index - i][column_index + i]
+                    if square == " ":
+                        right_end_reached = True
+                    else:
+                        right_diagonal.append(square)
+            if left_end_reached and right_end_reached:
+                break
+        return self.has_consecutive_identical_elements(right_diagonal)
 
     # Return true if each element of a row, column, or diagonal has been occupied by a player's symbol
     def has_victory(self, row_index, column_index):
         return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
-                    self.is_diagonal_win(row_index, column_index)])
+                    self.is_left_diagonal_win(row_index, column_index),
+                    self.is_right_diagonal_win(row_index, column_index)])
     
     # Return true if each element of the grid has been occupied, i.e., a tie has occurred
     def is_full(self):
@@ -308,7 +308,6 @@ class Game:
         self.board_height = self.set_board_height()
         self.board_width = self.set_board_width()
         self.win_length = self.set_win_length()
-        self.board = Grid(self.board_height, self.board_width, self.win_length)
         self.local_player_count = self.set_local_player_count()
 
     # Ask the user for the height of the board
@@ -379,6 +378,7 @@ class Game:
     def run(self):
         self.initialize_players()
         while self.play:
+            self.board = Grid(self.board_height, self.board_width, self.win_length)
             # Randomly determine which player's turn is first
             round_count = random.randint(1, 2)
             print(self.board)
