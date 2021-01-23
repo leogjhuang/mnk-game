@@ -262,6 +262,7 @@ class CPU(Player):
         print(visual_separator(f"{self.name}'s turn"))
         # Find optimal moves if the selected level of the CPU player is hard
         if self.level > 0:
+            opponent_symbols = set()
             # Check for a potential winning move
             for row in grid.rows:
                 for column in grid.columns:
@@ -271,15 +272,19 @@ class CPU(Player):
                             return row, column
                         else:
                             grid.cells[row][column] = " "
+                    opponent_symbols.add(grid.cells[row][column])
+            opponent_symbols.discard(" ")
+            opponent_symbols.discard(self.symbol)
             # Check for a potential blocking move
             for row in grid.rows:
                 for column in grid.columns:
                     if (row, column) in legal_moves:
-                        grid.cells[row][column] = self.opponent_symbol
-                        if grid.has_victory(row, column):
-                            return row, column
-                        else:
-                            grid.cells[row][column] = " "
+                        for symbol in opponent_symbols:
+                            grid.cells[row][column] = symbol
+                            if grid.has_victory(row, column):
+                                return row, column
+                            else:
+                                grid.cells[row][column] = " "
         # Randomly select a legal move if the selected level is easy or no optimal move is found
         return random.choice(legal_moves)
 
@@ -293,7 +298,6 @@ class Game:
     LATIN_CHARACTERS = [chr(code_point) for code_point in range(33, 127)]
     SYMBOL_DEFAULTS = ["X", "O"]
     CPU_LEVELS = ["easy", "hard"]
-    CPU_OPTIONS = "  ".join(f"[{level}] {CPU_LEVELS[level]}" for level in range(len(CPU_LEVELS)))
     PLAY_AGAIN_OPTIONS = ["yes", "no"]
 
     # Initialize game variables
@@ -345,8 +349,9 @@ class Game:
                 player_type = "CPU"
                 player_subclass = CPU
                 level_default = player_index
-                level_prompt = f"Set the level of {player_type} player ({self.CPU_OPTIONS}; default is {level_default})"
-                player_level = validate_input(level_prompt, int, range(len(self.CPU_OPTIONS))) or level_default
+                level_options = "  ".join(f"[{i}] {self.CPU_LEVELS[i]}" for i in range(len(self.CPU_LEVELS)))
+                level_prompt = f"Set the level of {player_type} player ({level_options}; default is {level_default})"
+                player_level = validate_input(level_prompt, int, range(len(level_options))) or level_default
 
             name_default = f"Player {player_index + 1}"
             name_prompt = f"Set the name of {player_type} player (default is '{name_default}'): "
@@ -371,6 +376,7 @@ class Game:
 
     # Loop until user chooses not to play again
     def run(self):
+        self.initialize_players()
         while self.play:
             # Randomly determine which player's turn is first
             round_count = random.randint(1, 2)
