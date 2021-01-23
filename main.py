@@ -1,7 +1,7 @@
 import random
 
 
-# Adds visual separator to a string for improved readability; returns updated string
+# Add visual separator to a string for improved readability; return updated string
 def visual_separator(message=None):
     separator = "".join("=" for _ in range(42))
     if message is not None:
@@ -9,7 +9,7 @@ def visual_separator(message=None):
     return separator
 
 
-# Checks if an input meets a set of criteria; returns validated input
+# Check if an input meets a set of criteria; return validated input
 def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_=None, max_=None):
     if range_ is not None and not range_:
         raise ValueError("argument for 'range_' is an empty sequence")
@@ -43,30 +43,33 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
 
 
 class Grid:
-    # Initializes grid's rows and columns; creates a two-dimensional list of blank cells
-    def __init__(self, column_count, row_count, consecutive_length):
+    # Initialize grid's rows and columns; create a two-dimensional list of blank cells
+    def __init__(self, column_count, row_count, consecutive_win_length):
         self.columns = range(column_count)
         self.rows = range(row_count)
-        self.win_length = consecutive_length
+        self.win_length = consecutive_win_length
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
-    # Overloads string representation of grid object; returns the grid's cells in text format
+    # Overload string representation of grid object; return the grid's cells in text format
     def __str__(self):
         lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"\t{row + 1}\n" for row in self.rows]
         gridlines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
         column_indices = "\n" + "   ".join(str(column + 1) for column in self.columns)
         return "\n" + gridlines.join(lines) + column_indices
 
-    # Returns a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
+    # Return a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
     def legal_moves(self):
         return [(row, column) for column in self.columns for row in self.rows if self.cells[row][column] == " "]
 
-    # Checks if each element of a row, column, or diagonal has been occupied by a player's symbol; returns true or false
-    def check_win(self, row_index, column_index):
-        return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
-                    self.is_diagonal_win(row_index, column_index)])
-    
-    # Checks if each element of a row has been occupied by a player's symbol; returns true or false
+    # Check if there is a consecutive subsequence of symbols in a sequence required for a win
+    def has_consecutive_win_length(self, sequence):
+        for i in range(len(sequence) - self.win_length + 1):
+            subsequence = [sequence[j] for j in range(i, i + self.win_length)]
+            if all(element == subsequence[0] for element in subsequence):
+                return True
+        return False
+
+    # Check if each element of a row has been occupied by a player's symbol; return true or false
     def is_horizontal_win(self, row_index, column_index):
         horizontal = []
         left_end_reached = False
@@ -91,14 +94,10 @@ class Grid:
                     else:
                         horizontal.append(square)
             if left_end_reached and right_end_reached:
-                return False
-        for i in range(len(horizontal) - self.win_length + 1):
-            sequence = [horizontal[j] for j in range(i, i + self.win_length)]
-            if all(element == sequence[0] for element in sequence):
-                return True
-        return False
+                break
+        return self.has_consecutive_win_length(horizontal)
     
-    # Checks if each element of a column has been occupied by a player's symbol; returns true or false
+    # Check if each element of a column has been occupied by a player's symbol; return true or false
     def is_vertical_win(self, row_index, column_index):
         vertical = []
         left_end_reached = False
@@ -123,14 +122,10 @@ class Grid:
                     else:
                         vertical.append(square)
             if left_end_reached and right_end_reached:
-                return False
-        for i in range(len(vertical) - self.win_length + 1):
-            sequence = [vertical[j] for j in range(i, i + self.win_length)]
-            if all(element == sequence[0] for element in sequence):
-                return True
-        return False
+                break
+        return self.has_consecutive_win_length(vertical)
 
-    # Checks if each element of a diagonal has been occupied by a player's symbol; returns true or false
+    # Check if each element of a diagonal has been occupied by a player's symbol; return true or false
     def is_diagonal_win(self, row_index, column_index):
         if self.rows == self.columns:
             if row_index == column_index:
@@ -157,11 +152,8 @@ class Grid:
                             else:
                                 left_diagonal.append(square)
                     if left_end_reached and right_end_reached:
-                        return False
-                for i in range(len(left_diagonal) - self.win_length + 1):
-                    sequence = [left_diagonal[j] for j in range(i, i + self.win_length)]
-                    if all(element == sequence[0] for element in sequence):
-                        return True
+                        break
+                return self.has_consecutive_win_length(left_diagonal)
             elif row_index + column_index + 1 == self.rows.stop:
                 right_diagonal = []
                 left_end_reached = False
@@ -186,15 +178,17 @@ class Grid:
                             else:
                                 right_diagonal.append(square)
                     if left_end_reached and right_end_reached:
-                        return False
-                for i in range(len(right_diagonal) - self.win_length + 1):
-                    sequence = [right_diagonal[j] for j in range(i, i + self.win_length)]
-                    if all(element == sequence[0] for element in sequence):
-                        return True
+                        break
+                return self.has_consecutive_win_length(right_diagonal)
         return False
+
+    # Check if each element of a row, column, or diagonal has been occupied by a player's symbol; return true or false
+    def has_victory(self, row_index, column_index):
+        return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
+                    self.is_diagonal_win(row_index, column_index)])
     
-    # Checks if each element of the grid has been occupied, i.e., a tie has occurred; returns true or false
-    def check_tie(self):
+    # Check if each element of the grid has been occupied, i.e., a tie has occurred; return true or false
+    def is_full(self):
         for row in self.rows:
             for column in self.columns:
                 if self.cells[row][column] == " ":
@@ -203,8 +197,9 @@ class Grid:
 
 
 class Player:
-    # Initializes player's name and symbol; loads record from player file if it exists
-    def __init__(self, name, symbol):
+    # Initialize player's name and symbol; load record from player file if it exists
+    def __init__(self, level, name, symbol):
+        self.level = level
         self.name = name
         self.symbol = symbol
         try:
@@ -214,20 +209,20 @@ class Player:
             record = [0, 0, 0]
         self.wins, self.losses, self.total_games = record
 
-    # Saves record to new or existing player file
+    # Save record to new or existing player file
     def save_record(self):
         record = (self.wins, self.losses, self.total_games)
         with open(f"{self.name}.txt", "w") as file:
             file.write("\n".join(str(score) for score in record))
 
-    # Prints player's record to the console
+    # Print player's record to the console
     def display_record(self):
         print(visual_separator(f"{self.name}'s statistics"))
         print(f"Wins: {self.wins}")
         print(f"Losses: {self.losses}")
         print(f"Total games: {self.total_games}")
 
-    # Updates player's record based on result
+    # Update player's record based on result
     def update_record(self, result):
         if result == "win":
             self.wins += 1
@@ -237,11 +232,11 @@ class Player:
 
 
 class Local(Player):
-    # Initializes local player object with the inherited constructor from the 'Player' class
-    def __init__(self, name, symbol):
-        super().__init__(name, symbol)
+    # Initialize local player object with the inherited constructor from the 'Player' class
+    def __init__(self, level, name, symbol):
+        super().__init__(level, name, symbol)
 
-    # Validates local player's turn by verifying with the grid's legal moves; returns tuple with row and column
+    # Validate local player's turn by verifying with the grid's legal moves; return tuple with row and column
     def take_turn(self, grid):
         legal_moves = grid.legal_moves()
         print(visual_separator(f"{self.name}'s turn"))
@@ -257,23 +252,17 @@ class Local(Player):
 
 
 class CPU(Player):
-    # Initializes CPU player object with the inherited constructor; initializes name based on difficulty
-    def __init__(self, difficulty, symbol, opponent_symbol):
-        self.difficulty = difficulty
-        if self.difficulty > 1:
-            name = "HardBot"
-        else:
-            name = "EasyBot"
-        super().__init__(name, symbol)
-        self.opponent_symbol = opponent_symbol
+    # Initialize CPU player object with the inherited constructor
+    def __init__(self, level, name, symbol):
+        super().__init__(level, name, symbol)
 
-    # Validates CPU player's turn by verifying with the grid's legal moves; returns tuple with row and column
+    # Validate CPU player's turn by verifying with the grid's legal moves; return tuple with row and column
     def take_turn(self, grid):
         legal_moves = grid.legal_moves()
         print(visual_separator(f"{self.name}'s turn"))
-        # Finds optimal moves if the selected difficulty of the CPU player is hard
-        if self.difficulty > 1:
-            # Checks for a potential winning move
+        # Find optimal moves if the selected level of the CPU player is hard
+        if self.level > 0:
+            # Check for a potential winning move
             for row in grid.rows:
                 for column in grid.columns:
                     if (row, column) in legal_moves:
@@ -282,7 +271,7 @@ class CPU(Player):
                             return row, column
                         else:
                             grid.cells[row][column] = " "
-            # Checks for a potential blocking move
+            # Check for a potential blocking move
             for row in grid.rows:
                 for column in grid.columns:
                     if (row, column) in legal_moves:
@@ -291,87 +280,131 @@ class CPU(Player):
                             return row, column
                         else:
                             grid.cells[row][column] = " "
-        # Randomly selects a legal move if the selected difficulty is easy or no optimal move is found
+        # Randomly select a legal move if the selected level is easy or no optimal move is found
         return random.choice(legal_moves)
 
 
 class Game:
-    # Initializes variables for running the game
-    play = True
-    symbols = ["X", "O"]
-    players = []
+    MIN_HEIGHT = MIN_WIDTH = MIN_WIN_LENGTH = 3
+    MAX_HEIGHT = MAX_WIDTH = 15
+    MIN_LOCAL_PLAYERS = 1
+    MAX_LOCAL_PLAYERS = 2
+    MAX_TOTAL_PLAYERS = 2
+    LATIN_CHARACTERS = [chr(code_point) for code_point in range(33, 127)]
+    SYMBOL_DEFAULTS = ["X", "O"]
+    CPU_LEVELS = ["easy", "hard"]
+    CPU_OPTIONS = "  ".join(f"[{level}] {CPU_LEVELS[level]}" for level in range(len(CPU_LEVELS)))
+    PLAY_AGAIN_OPTIONS = ["yes", "no"]
 
-    # Initializes game prompts and messages
-    height_prompt = "What height would you like your board to be (2 to 10)? "
-    width_prompt = "What width would you like your board to be (2 to 10)? "
-    win_length_prompt = "What win length would you like? "
-    mode_prompt = "How many players will be playing (1 or 2)? "
-    name_prompt = "What would you like your name to be? "
-    difficulty_prompt = "What difficulty would you like to choose (1 or 2)? "
-    play_again_prompt = "Would you like to play again (yes or no)? "
-    end_message = "Thanks for playing!"
+    # Initialize game variables
+    def __init__(self):
+        self.play = True
+        self.players = []
+        self.board_height = self.set_board_height()
+        self.board_width = self.set_board_width()
+        self.win_length = self.set_win_length()
+        self.board = Grid(self.board_height, self.board_width, self.win_length)
+        self.local_player_count = self.set_local_player_count()
 
-    # Asks the user for the size of the board and the number of local players
-    height = validate_input(height_prompt, int, range(2, 11))
-    width = validate_input(width_prompt, int, range(2, 11))
-    win_length = validate_input(win_length_prompt, int, range(2, min(height, width)))
-    player_count = validate_input(mode_prompt, int, [1, 2])
+    # Ask the user for the height of the board
+    def set_board_height(self):
+        lower_bound = self.MIN_HEIGHT
+        upper_bound = self.MAX_HEIGHT
+        board_height_prompt = f"Set board height ({lower_bound}-{upper_bound}): "
+        return validate_input(board_height_prompt, int, range(lower_bound, upper_bound + 1))
 
-    # Asks the user for the name(s) of the local player(s); creates local player object(s)
-    for player_index in range(player_count):
-        print(f"Player {player_index + 1}: ", end="")
-        player_name = validate_input(name_prompt, str)
-        print(f"Player {player_index + 1} is now {player_name}.")
-        players.append(Local(player_name, symbols[player_index]))
+    # Ask the user for the width of the board
+    def set_board_width(self):
+        lower_bound = self.MIN_WIDTH
+        upper_bound = self.MAX_WIDTH
+        board_width_prompt = f"Set board width ({lower_bound}-{upper_bound}): "
+        return validate_input(board_width_prompt, int, range(lower_bound, upper_bound + 1))
 
-    # Asks the user for the difficulty of the CPU player if there is only one player; creates CPU player object
-    if player_count == 1:
-        cpu_difficulty = validate_input(difficulty_prompt, int, [1, 2])
-        players.append(CPU(cpu_difficulty, symbols[1], symbols[0]))
-        print(f"Player 2 is now {players[1].name}.")
+    # Ask the user for the length of consecutive symbols required to win
+    def set_win_length(self):
+        lower_bound = self.MIN_WIN_LENGTH
+        upper_bound = max(self.board_height, self.board_width)
+        win_length_prompt = f"Set length of consecutive symbols required to win ({lower_bound}-{upper_bound}): "
+        return validate_input(win_length_prompt, int, range(lower_bound, upper_bound + 1))
 
-    # Loops until user chooses not to play again
-    while play:
-        # Randomly determines which player's turn is first
-        round_count = random.randint(1, 2)
-        game_board = Grid(height, width, win_length)
-        print(game_board)
+    # Ask the user for the number of local players
+    def set_local_player_count(self):
+        lower_bound = self.MIN_LOCAL_PLAYERS
+        upper_bound = self.MAX_LOCAL_PLAYERS
+        local_player_count_prompt = f"Set the number of local players ({lower_bound}-{upper_bound}): "
+        return validate_input(local_player_count_prompt, int, range(lower_bound, upper_bound + 1))
 
-        # Loops until the game is finished either due to a win or a tie
-        while True:
-            # Determines which player's turn it is this round
-            round_count += 1
-            current_player = players[round_count % 2]
+    # Initialize local and CPU player objects
+    def initialize_players(self):
+        for player_index in range(self.MAX_TOTAL_PLAYERS):
+            if player_index < self.local_player_count:
+                player_type = "local"
+                player_subclass = Local
+                player_level = 1
+            else:
+                player_type = "CPU"
+                player_subclass = CPU
+                level_default = player_index
+                level_prompt = f"Set the level of {player_type} player ({self.CPU_OPTIONS}; default is {level_default})"
+                player_level = validate_input(level_prompt, int, range(len(self.CPU_OPTIONS))) or level_default
 
-            # Updates the game board based on the position that the current player chooses
-            position_row, position_column = current_player.take_turn(game_board)
-            game_board.cells[position_row][position_column] = current_player.symbol
-            print(game_board)
+            name_default = f"Player {player_index + 1}"
+            name_prompt = f"Set the name of {player_type} player (default is '{name_default}'): "
+            player_name = validate_input(name_prompt, str) or name_default
 
-            # Exits the game loop and update records if a win has occurred
-            if game_board.check_win(position_row, position_column):
-                print(visual_separator(f"{current_player.name} wins!"))
-                current_player.update_record("win")
-                players[1 - round_count % 2].update_record("loss")
-                break
+            symbol_default = self.SYMBOL_DEFAULTS[player_index]
+            symbol_prompt = f"Set the symbol of {player_type} player (default is '{symbol_default}'): "
+            player_symbol = validate_input(symbol_prompt, str, self.LATIN_CHARACTERS) or symbol_default
 
-            # Exits the game loop and update records if a tie has occurred
-            elif game_board.check_tie():
-                print(visual_separator("Game ends in a tie!"))
-                current_player.update_record("tie")
-                players[1 - round_count % 2].update_record("tie")
-                break
+            self.players.append(player_subclass(player_level, player_name, player_symbol))
 
-        # Saves and displays players' records after the game is finished
-        for player in players:
+    # Save and display players' records after the game is finished
+    def update_all_player_records(self):
+        for player in self.players:
             player.save_record()
             player.display_record()
 
-        # Asks the user whether they would like to play again
-        play = validate_input(visual_separator(play_again_prompt), str.lower, ["yes", "no"]) == "yes"
+    # Ask the user whether they would like to play again
+    def set_replay_status(self):
+        play_again_prompt = f"{self.players[0].name}, would you like to play again? "
+        return validate_input(play_again_prompt, str.lower, self.PLAY_AGAIN_OPTIONS) == self.PLAY_AGAIN_OPTIONS[0]
 
-    print(visual_separator(end_message))
+    # Loop until user chooses not to play again
+    def run(self):
+        while self.play:
+            # Randomly determine which player's turn is first
+            round_count = random.randint(1, 2)
+            print(self.board)
+
+            # Loop until the game is finished either due to a win or a tie
+            while True:
+                # Determine which player's turn it is this round
+                round_count += 1
+                current_player = self.players[round_count % 2]
+
+                # Update the game board based on the position that the current player chooses
+                position_row, position_column = current_player.take_turn(self.board)
+                self.board.cells[position_row][position_column] = current_player.symbol
+                print(self.board)
+
+                # Exit the game loop and update records if a win has occurred
+                if self.board.has_victory(position_row, position_column):
+                    print(visual_separator(f"{current_player.name} wins!"))
+                    current_player.update_record("win")
+                    self.players[1 - round_count % 2].update_record("loss")
+                    break
+
+                # Exit the game loop and update records if a tie has occurred
+                elif self.board.is_full():
+                    print(visual_separator("Game ends in a tie!"))
+                    current_player.update_record("tie")
+                    self.players[1 - round_count % 2].update_record("tie")
+                    break
+
+            self.update_all_player_records()
+            self.play = self.set_replay_status()
 
 
 if __name__ == "__main__":
     game = Game()
+    game.run()
