@@ -44,7 +44,7 @@ def visual_separator(message=None):
 
 class Grid:
     # Initialize grid's rows, columns, and win length; create a two-dimensional list of blank cells
-    def __init__(self, column_count, row_count, consecutive_win_length):
+    def __init__(self, row_count, column_count, consecutive_win_length):
         self.rows = range(row_count)
         self.columns = range(column_count)
         self.win_length = consecutive_win_length
@@ -183,17 +183,17 @@ class Grid:
     
     # Return true if each element of the grid has been occupied, i.e., a tie has occurred
     def is_full(self):
-        for row in self.rows:
-            for column in self.columns:
-                if self.cells[row][column] == " ":
+        for row_index in self.rows:
+            for column_index in self.columns:
+                if self.cells[row_index][column_index] == " ":
                     return False
         return True
 
 
 class GravityDisabled(Grid):
     # Initialize gravity-disabled grid with the inherited constructor from the 'Grid' class
-    def __init__(self, column_count, row_count, consecutive_win_length):
-        super().__init__(column_count, row_count, consecutive_win_length)
+    def __init__(self, row_count, column_count, consecutive_win_length):
+        super().__init__(row_count, column_count, consecutive_win_length)
 
     # Overload string representation of grid object with column and row indices; return the grid's cells in text format
     def __str__(self):
@@ -214,7 +214,7 @@ class GravityDisabled(Grid):
 
 class GravityEnabled(Grid):
     # Initialize gravity-enabled grid with the inherited constructor from the 'Grid' class
-    def __init__(self, column_count, row_count, consecutive_win_length):
+    def __init__(self, row_count, column_count, consecutive_win_length):
         super().__init__(column_count, row_count, consecutive_win_length)
 
     # Overload string representation of grid object with column indices; return the grid's cells in text format
@@ -238,6 +238,8 @@ class GravityEnabled(Grid):
             for row_index in self.rows:
                 if self.cells[self.rows.stop - row_index - 1][column_index] == " ":
                     legal_moves.append((self.rows.stop - row_index - 1, column_index))
+                    break
+        print(legal_moves)
         return legal_moves
 
 
@@ -314,27 +316,23 @@ class CPU(Player):
         if self.level > 0:
             opponent_symbols = set()
             # Check for a potential winning move
-            for row in grid.rows:
-                for column in grid.columns:
-                    if (row, column) in legal_moves:
-                        grid.cells[row][column] = self.symbol
-                        if grid.has_victory(row, column):
-                            return row, column
-                        else:
-                            grid.cells[row][column] = " "
-                    opponent_symbols.add(grid.cells[row][column])
+            for row, column in legal_moves:
+                grid.cells[row][column] = self.symbol
+                opponent_symbols.add(grid.cells[row][column])
+                if grid.has_victory(row, column):
+                    return row, column
+                else:
+                    grid.cells[row][column] = " "
             opponent_symbols.discard(" ")
             opponent_symbols.discard(self.symbol)
             # Check for a potential blocking move
-            for row in grid.rows:
-                for column in grid.columns:
-                    if (row, column) in legal_moves:
-                        for symbol in opponent_symbols:
-                            grid.cells[row][column] = symbol
-                            if grid.has_victory(row, column):
-                                return row, column
-                            else:
-                                grid.cells[row][column] = " "
+            for row, column in legal_moves:
+                for symbol in opponent_symbols:
+                    grid.cells[row][column] = symbol
+                    if grid.has_victory(row, column):
+                        return row, column
+                    else:
+                        grid.cells[row][column] = " "
         # Randomly select a legal move if the selected level is easy or no optimal move is found
         return random.choice(legal_moves)
 
