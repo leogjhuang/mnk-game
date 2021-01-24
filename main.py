@@ -38,7 +38,7 @@ def validate_input(prompt="Enter a valid input: ", type_=None, range_=None, min_
 def visual_separator(message=None):
     separator = "".join("=" for _ in range(42))
     if message is not None:
-        return "\n".join((separator, message))
+        return "\n".join((separator, str(message)))
     return separator
 
 
@@ -64,8 +64,8 @@ class Grid:
         return False
     
     # Return true if each element of a row has been occupied by a player's symbol
-    def is_horizontal_win(self, row_index, column_index):
-        horizontal = [self.cells[row_index][column_index]]
+    def is_horizontal_win(self, row_index, column_index, symbol):
+        horizontal = [symbol]
         left_end_reached = False
         right_end_reached = False
         for i in range(1, self.win_length):
@@ -92,8 +92,8 @@ class Grid:
         return self.has_consecutive_identical_elements(horizontal)
 
     # Return true if each element of a column has been occupied by a player's symbol
-    def is_vertical_win(self, row_index, column_index):
-        vertical = [self.cells[row_index][column_index]]
+    def is_vertical_win(self, row_index, column_index, symbol):
+        vertical = [symbol]
         left_end_reached = False
         right_end_reached = False
         for i in range(1, self.win_length):
@@ -120,8 +120,8 @@ class Grid:
         return self.has_consecutive_identical_elements(vertical)
 
     # Return true if each element of a left diagonal has been occupied by a player's symbol
-    def is_left_diagonal_win(self, row_index, column_index):
-        left_diagonal = [self.cells[row_index][column_index]]
+    def is_left_diagonal_win(self, row_index, column_index, symbol):
+        left_diagonal = [symbol]
         left_end_reached = False
         right_end_reached = False
         for i in range(1, self.win_length):
@@ -148,8 +148,8 @@ class Grid:
         return self.has_consecutive_identical_elements(left_diagonal)
 
     # Return true if each element of a left diagonal has been occupied by a player's symbol
-    def is_right_diagonal_win(self, row_index, column_index):
-        right_diagonal = [self.cells[row_index][column_index]]
+    def is_right_diagonal_win(self, row_index, column_index, symbol):
+        right_diagonal = [symbol]
         left_end_reached = False
         right_end_reached = False
         for i in range(1, self.win_length):
@@ -176,10 +176,10 @@ class Grid:
         return self.has_consecutive_identical_elements(right_diagonal)
 
     # Return true if each element of a row, column, or diagonal has been occupied by a player's symbol
-    def has_victory(self, row_index, column_index):
-        return any([self.is_horizontal_win(row_index, column_index), self.is_vertical_win(row_index, column_index),
-                    self.is_left_diagonal_win(row_index, column_index),
-                    self.is_right_diagonal_win(row_index, column_index)])
+    def has_victory(self, row_index, column_index, symbol):
+        position = (row_index, column_index, symbol)
+        return any([self.is_horizontal_win(*position), self.is_vertical_win(*position),
+                    self.is_left_diagonal_win(*position), self.is_right_diagonal_win(*position)])
     
     # Return true if each element of the grid has been occupied, i.e., a tie has occurred
     def is_full(self):
@@ -197,10 +197,11 @@ class GravityDisabled(Grid):
 
     # Overload string representation of grid object with column and row indices; return the grid's cells in text format
     def __str__(self):
-        lines = [" | ".join(self.cells[row][column] for column in self.columns) + f"  {row + 1}\n" for row in self.rows]
-        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_indices = "   ".join(str(column + 1) for column in self.columns)
-        return "\n".join((splits.join(lines), column_indices))
+        grid_cells = [" | ".join(self.cells[row_index][column_index] for column_index in self.columns)
+                      + f"  {row_index + 1}\n" for row_index in self.rows]
+        grid_lines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
+        return "\n".join((grid_lines.join(grid_cells), column_labels))
 
     # Add symbol to a cell with the given row_index and column_index
     def add_symbol(self, row_index, column_index, symbol):
@@ -209,20 +210,22 @@ class GravityDisabled(Grid):
 
     # Return a list of tuples containing the row index and column index of cells that are blank, i.e., a legal move
     def legal_moves(self):
-        return [(row, column) for column in self.columns for row in self.rows if self.cells[row][column] == " "]
+        return [(row_index, column_index) for column_index in self.columns for row_index in self.rows
+                if self.cells[row_index][column_index] == " "]
 
 
 class GravityEnabled(Grid):
     # Initialize gravity-enabled grid with the inherited constructor from the 'Grid' class
     def __init__(self, row_count, column_count, consecutive_win_length):
-        super().__init__(column_count, row_count, consecutive_win_length)
+        super().__init__(row_count, column_count, consecutive_win_length)
 
     # Overload string representation of grid object with column indices; return the grid's cells in text format
     def __str__(self):
-        lines = [" | ".join(self.cells[row][column] for column in self.columns) + "\n" for row in self.rows]
-        splits = "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_indices = "   ".join(str(column + 1) for column in self.columns)
-        return "\n".join((splits.join(lines), column_indices))
+        grid_cells = [" | ".join(self.cells[row_index][column_index] for column_index in self.columns)
+                      for row_index in self.rows]
+        grid_lines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
+        return "\n".join((grid_lines.join(grid_cells), column_labels))
 
     # Add symbol to a column such that it falls to the bottom of the grid according to gravity
     def add_symbol(self, _, column_index, symbol):
@@ -314,25 +317,19 @@ class CPU(Player):
         print(visual_separator(f"{self.name}'s turn"))
         # Find optimal moves if the selected level of the CPU player is hard
         if self.level > 0:
-            opponent_symbols = set()
+            opponent_symbols = set((symbol for symbol in grid.cells[row_index][column_index]
+                                    if symbol not in (" ", self.symbol))
+                                   for column_index in grid.columns for row_index in grid.rows)
+            print(opponent_symbols)
             # Check for a potential winning move
-            for row, column in legal_moves:
-                grid.cells[row][column] = self.symbol
-                opponent_symbols.add(grid.cells[row][column])
-                if grid.has_victory(row, column):
-                    return row, column
-                else:
-                    grid.cells[row][column] = " "
-            opponent_symbols.discard(" ")
-            opponent_symbols.discard(self.symbol)
+            for row_index, column_index in legal_moves:
+                if grid.has_victory(row_index, column_index, self.symbol):
+                    return row_index, column_index
             # Check for a potential blocking move
-            for row, column in legal_moves:
-                for symbol in opponent_symbols:
-                    grid.cells[row][column] = symbol
-                    if grid.has_victory(row, column):
-                        return row, column
-                    else:
-                        grid.cells[row][column] = " "
+            for row_index, column_index in legal_moves:
+                for opponent_symbol in opponent_symbols:
+                    if grid.has_victory(row_index, column_index, opponent_symbol):
+                        return row_index, column_index
         # Randomly select a legal move if the selected level is easy or no optimal move is found
         return random.choice(legal_moves)
 
@@ -448,7 +445,7 @@ class Game:
 
     # Exit game loop and update records if a win or tie has occurred
     def game_finished(self, row_index, column_index, player, round_count):
-        if self.board.has_victory(row_index, column_index):
+        if self.board.has_victory(row_index, column_index, player.symbol):
             print(visual_separator(f"{player.name} wins!"))
             player.update_record("win")
             self.players[1 - round_count % 2].update_record("loss")
@@ -472,7 +469,7 @@ class Game:
             # Randomly determine which player's turn is first
             self.board.reset()
             round_count = random.randint(1, 2)
-            print(self.board)
+            print(visual_separator(self.board))
 
             # Loop until the game is finished either due to a win or a tie
             while True:
@@ -482,7 +479,7 @@ class Game:
 
                 # Update the game board based on the position that the current player chooses
                 row, column = self.board.add_symbol(*current_player.take_turn(self.board), current_player.symbol)
-                print(self.board)
+                print(visual_separator(self.board))
                 if self.game_finished(row, column, current_player, round_count):
                     break
 
