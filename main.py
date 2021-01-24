@@ -197,9 +197,9 @@ class GravityDisabled(Grid):
 
     # Overload string representation of grid object with column and row indices; return the grid's cells in text format
     def __str__(self):
-        grid_cells = [" | ".join(self.cells[row_index][column_index] for column_index in self.columns)
+        grid_cells = ["\t" + " | ".join(self.cells[row_index][column_index] for column_index in self.columns)
                       + f"  {row_index + 1}\n" for row_index in self.rows]
-        grid_lines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        grid_lines = "\t" + "+".join("---" for _ in self.columns)[1:-1] + "\n"
         column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
         return "\n".join((grid_lines.join(grid_cells), column_labels))
 
@@ -221,9 +221,9 @@ class GravityEnabled(Grid):
 
     # Overload string representation of grid object with column indices; return the grid's cells in text format
     def __str__(self):
-        grid_cells = [" | ".join(self.cells[row_index][column_index] for column_index in self.columns) + "\n"
+        grid_cells = ["\t" + " | ".join(self.cells[row_index][column_index] for column_index in self.columns) + "\n"
                       for row_index in self.rows]
-        grid_lines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
+        grid_lines = "\t" + "+".join("---" for _ in self.columns)[1:-1] + "\n"
         column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
         return "\n".join((grid_lines.join(grid_cells), column_labels))
 
@@ -288,7 +288,7 @@ class Local(Player):
     # Validate local player's turn by verifying with the grid's legal moves; return tuple with row and column
     def take_turn(self, grid):
         legal_moves = grid.legal_moves()
-        print(visual_separator(f"{self.name}'s turn"))
+        print(visual_separator(f"{self.name} ({self.symbol})"))
         while True:
             row_prompt = f"Enter the row you want to select ({grid.rows.start + 1}-{grid.rows.stop}): "
             column_prompt = f"Enter the column you want to select ({grid.columns.start + 1}-{grid.columns.stop}): "
@@ -319,7 +319,6 @@ class CPU(Player):
             opponent_symbols = set(grid.cells[row_index][column_index]
                                    for column_index in grid.columns for row_index in grid.rows
                                    if grid.cells[row_index][column_index] not in (" ", self.symbol))
-            print(opponent_symbols)
             # Check for a potential winning move
             for row_index, column_index in legal_moves:
                 if grid.has_victory(row_index, column_index, self.symbol):
