@@ -50,7 +50,7 @@ class Grid:
         self.win_length = consecutive_win_length
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
-    # Reset each cell in the grid to empty
+    # Reset each cell in the grid to be empty
     def reset(self):
         self.cells = [[" " for _ in self.columns] for _ in self.rows]
 
@@ -147,7 +147,7 @@ class Grid:
                 break
         return self.has_consecutive_identical_elements(left_diagonal)
 
-    # Return true if each element of a left diagonal has been occupied by a player's symbol
+    # Return true if each element of a right diagonal has been occupied by a player's symbol
     def is_right_diagonal_win(self, row_index, column_index, symbol):
         right_diagonal = [symbol]
         left_end_reached = False
@@ -200,10 +200,10 @@ class GravityDisabled(Grid):
         grid_cells = ["\t" + " | ".join(self.cells[row_index][column_index] for column_index in self.columns)
                       + f"  {row_index + 1}\n" for row_index in self.rows]
         grid_lines = "\t" + "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
+        column_labels = "\t" + "   ".join(str(column_index + 1) for column_index in self.columns)
         return "\n".join((grid_lines.join(grid_cells), column_labels))
 
-    # Add symbol to a cell with the given row_index and column_index
+    # Add symbol to a cell with the given row index and column index; return the given row index and column index
     def add_symbol(self, row_index, column_index, symbol):
         self.cells[row_index][column_index] = symbol
         return row_index, column_index
@@ -224,17 +224,17 @@ class GravityEnabled(Grid):
         grid_cells = ["\t" + " | ".join(self.cells[row_index][column_index] for column_index in self.columns) + "\n"
                       for row_index in self.rows]
         grid_lines = "\t" + "+".join("---" for _ in self.columns)[1:-1] + "\n"
-        column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
+        column_labels = "\t" + "   ".join(str(column_index + 1) for column_index in self.columns)
         return "\n".join((grid_lines.join(grid_cells), column_labels))
 
-    # Add symbol to a column such that it falls to the bottom of the grid according to gravity
+    # Add symbol to a column such that it falls to the bottom of the grid according to gravity; return new indices
     def add_symbol(self, _, column_index, symbol):
         for row_index in self.rows:
             if self.cells[self.rows.stop - row_index - 1][column_index] == " ":
                 self.cells[self.rows.stop - row_index - 1][column_index] = symbol
                 return self.rows.stop - row_index - 1, column_index
 
-    # Return a list containing the column index of column that have a blank top cell
+    # Return a list containing the row index and column index of all legal moves
     def legal_moves(self):
         legal_moves = []
         for column_index in self.columns:
@@ -313,23 +313,27 @@ class CPU(Player):
     # Validate CPU player's turn by verifying with the grid's legal moves; return tuple with row and column
     def take_turn(self, grid):
         legal_moves = grid.legal_moves()
-        print(visual_separator(f"{self.name}'s turn"))
+        print(visual_separator(f"{self.name} ({self.symbol})"))
         # Find optimal moves if the selected level of the CPU player is hard
         if self.level > 0:
-            opponent_symbols = set(grid.cells[row_index][column_index]
-                                   for column_index in grid.columns for row_index in grid.rows
-                                   if grid.cells[row_index][column_index] not in (" ", self.symbol))
             # Check for a potential winning move
             for row_index, column_index in legal_moves:
                 if grid.has_victory(row_index, column_index, self.symbol):
+                    print(f"Row: {row_index + 1}\nColumn: {column_index + 1}")
                     return row_index, column_index
             # Check for a potential blocking move
+            opponent_symbols = set(grid.cells[row_index][column_index]
+                                   for column_index in grid.columns for row_index in grid.rows
+                                   if grid.cells[row_index][column_index] not in (" ", self.symbol))
             for row_index, column_index in legal_moves:
                 for opponent_symbol in opponent_symbols:
                     if grid.has_victory(row_index, column_index, opponent_symbol):
+                        print(f"Row: {row_index + 1}\nColumn: {column_index + 1}")
                         return row_index, column_index
         # Randomly select a legal move if the selected level is easy or no optimal move is found
-        return random.choice(legal_moves)
+        row_index, column_index = random.choice(legal_moves)
+        print(f"Row: {row_index + 1}\nColumn: {column_index + 1}")
+        return row_index, column_index
 
 
 class Game:
@@ -353,34 +357,34 @@ class Game:
         self.board = self.set_board_options()
         self.local_player_count = self.set_local_player_count()
 
-    # Ask the user for the height of the board
+    # Ask the user for the height of the board; return height
     def set_board_height(self):
         lower_bound = self.MIN_HEIGHT
         upper_bound = self.MAX_HEIGHT
         board_height_prompt = f"Set board height ({lower_bound}-{upper_bound}): "
         return validate_input(board_height_prompt, int, range(lower_bound, upper_bound + 1))
 
-    # Ask the user for the width of the board
+    # Ask the user for the width of the board; return width
     def set_board_width(self):
         lower_bound = self.MIN_WIDTH
         upper_bound = self.MAX_WIDTH
         board_width_prompt = f"Set board width ({lower_bound}-{upper_bound}): "
         return validate_input(board_width_prompt, int, range(lower_bound, upper_bound + 1))
 
-    # Ask the user for the length of consecutive symbols required to win
+    # Ask the user for the length of consecutive symbols required to win; return win length
     def set_win_length(self, board_height, board_width):
         lower_bound = self.MIN_WIN_LENGTH
         upper_bound = max(board_height, board_width)
         win_length_prompt = f"Set length of consecutive symbols required to win ({lower_bound}-{upper_bound}): "
         return validate_input(win_length_prompt, int, range(lower_bound, upper_bound + 1))
 
-    # Ask the user for the the gravity option for the board
+    # Ask the user for the the gravity option for the board; return gravity toggle
     def set_board_gravity(self):
         gravity_options = "  ".join(f"[{mode}] {self.GRAVITY_MODES[mode]}" for mode in range(len(self.GRAVITY_MODES)))
         gravity_prompt = f"Set the gravity option for the board ({gravity_options}): "
         return validate_input(gravity_prompt, int, range(len(self.GRAVITY_MODES)))
 
-    # Ask the user to set board properties
+    # Ask the user to set board properties; return GravityEnabled or GravityDisabled object
     def set_board_options(self):
         board_options = "  ".join(f"[{mode}] {self.BOARD_MODES[mode]}" for mode in range(len(self.BOARD_MODES)))
         board_prompt = f"Choose a preset or custom option for the board ({board_options}): "
@@ -396,7 +400,7 @@ class Game:
             return GravityEnabled(height, width, win_length)
         return GravityDisabled(height, width, win_length)
 
-    # Ask the user for the number of local players
+    # Ask the user for the number of local players; return local player count
     def set_local_player_count(self):
         lower_bound = self.MIN_LOCAL_PLAYERS
         upper_bound = self.MAX_LOCAL_PLAYERS
@@ -413,10 +417,11 @@ class Game:
             else:
                 player_type = "CPU"
                 player_subclass = CPU
+                # Set the level of the player if the player is CPU
                 level_options = "  ".join(f"[{mode}] {self.CPU_LEVELS[mode]}" for mode in range(len(self.CPU_LEVELS)))
                 level_prompt = f"Set the level of {player_type} player ({level_options}): "
                 player_level = validate_input(level_prompt, int, range(len(self.CPU_LEVELS)))
-
+            # Set the name of the player
             name_default = f"Player {player_index + 1}"
             name_prompt = f"Set the name of {player_type} player (default is '{name_default}'): "
             while True:
@@ -424,7 +429,7 @@ class Game:
                 if player_name not in [player.name for player in self.players]:
                     break
                 print("This name has already been taken.")
-
+            # Set the symbol of the player
             symbol_default = self.SYMBOL_DEFAULTS[player_index]
             symbol_prompt = f"Set the symbol of {player_type} player (default is '{symbol_default}'): "
             while True:
@@ -432,7 +437,6 @@ class Game:
                 if player_symbol not in [player.symbol for player in self.players]:
                     break
                 print("This symbol has already been taken.")
-
             self.players.append(player_subclass(player_level, player_name, player_symbol))
 
     # Save and display players' records after the game is finished
@@ -441,7 +445,7 @@ class Game:
             player.save_record()
             player.display_record()
 
-    # Exit game loop and update records if a win or tie has occurred
+    # Exit game loop and update records if a win or tie has occurred; return true if game has finished
     def game_finished(self, row_index, column_index, player, round_count):
         if self.board.has_victory(row_index, column_index, player.symbol):
             print(visual_separator(f"{player.name} wins!"))
@@ -455,7 +459,7 @@ class Game:
             return True
         return False
 
-    # Ask the user whether they would like to play again
+    # Ask the user whether they would like to play again; return true if user would like to play again
     def set_replay_status(self, player):
         play_again_prompt = f"{player.name}, would you like to play again? "
         return validate_input(play_again_prompt, str.lower, self.PLAY_AGAIN_MODES) == self.PLAY_AGAIN_MODES[0]
@@ -468,21 +472,18 @@ class Game:
             self.board.reset()
             round_count = random.randint(1, 2)
             print(visual_separator(self.board))
-
             # Loop until the game is finished either due to a win or a tie
             while True:
                 # Determine which player's turn it is this round
                 round_count += 1
                 current_player = self.players[round_count % 2]
-
                 # Update the game board based on the position that the current player chooses
                 row, column = self.board.add_symbol(*current_player.take_turn(self.board), current_player.symbol)
                 print(visual_separator(self.board))
                 if self.game_finished(row, column, current_player, round_count):
                     break
-
             self.update_all_player_records()
-            self.play = self.set_replay_status(current_player)
+            self.play = self.set_replay_status(self.players[0])
 
 
 if __name__ == "__main__":
