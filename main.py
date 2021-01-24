@@ -221,7 +221,7 @@ class GravityEnabled(Grid):
 
     # Overload string representation of grid object with column indices; return the grid's cells in text format
     def __str__(self):
-        grid_cells = [" | ".join(self.cells[row_index][column_index] for column_index in self.columns)
+        grid_cells = [" | ".join(self.cells[row_index][column_index] for column_index in self.columns) + "\n"
                       for row_index in self.rows]
         grid_lines = "+".join("---" for _ in self.columns)[1:-1] + "\n"
         column_labels = "   ".join(str(column_index + 1) for column_index in self.columns)
@@ -242,7 +242,6 @@ class GravityEnabled(Grid):
                 if self.cells[self.rows.stop - row_index - 1][column_index] == " ":
                     legal_moves.append((self.rows.stop - row_index - 1, column_index))
                     break
-        print(legal_moves)
         return legal_moves
 
 
@@ -317,9 +316,9 @@ class CPU(Player):
         print(visual_separator(f"{self.name}'s turn"))
         # Find optimal moves if the selected level of the CPU player is hard
         if self.level > 0:
-            opponent_symbols = set((symbol for symbol in grid.cells[row_index][column_index]
-                                    if symbol not in (" ", self.symbol))
-                                   for column_index in grid.columns for row_index in grid.rows)
+            opponent_symbols = set(grid.cells[row_index][column_index]
+                                   for column_index in grid.columns for row_index in grid.rows
+                                   if grid.cells[row_index][column_index] not in (" ", self.symbol))
             print(opponent_symbols)
             # Check for a potential winning move
             for row_index, column_index in legal_moves:
