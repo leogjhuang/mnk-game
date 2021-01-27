@@ -21,3 +21,6 @@ I am proposing a game for this final project titled The Game of MNK, based on th
 - [ ] nable a special gravity mode such that the direction of gravity rotates after each turn
 - [ ] Enable three or more players in a game
 - [ ] Construct a CPU player that plays perfectly in all solved m,n,k-games
+
+# Functionality
+I will dedicate this project to mastering object-oriented programming in Python, ensuring that most components of the game will be built through the use of classes and features like inheritance. Basic elements like if-statements and for-loops will be used effectively. Classes like Grid and Player will each involve complex methods that return different types and also call other methods. The main array generated in the project will be the game board itself, and I will use features such as list comprehension and splicing to guarantee efficient functionality within the game. Finally, I will handle player files with more intricate statistics such as “Game mode played most” and “Win percentage”. These unique game characteristics will help me demonstrate proficiency in many of Python’s useful features such as methods, arrays, and file streaming.
