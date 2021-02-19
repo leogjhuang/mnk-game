@@ -44,3 +44,8 @@ Some limitations I encountered while developing the program was an efficient way
 There are many additional features that this game can include, from a greater variety of modes to a more user-friendly interface. Given enough time, these additions could be easily incorporated, but due to the small timespan of the project, I had to stick to a more basic game foundation. More resources would definitely provide the project with even greater flexibility, and I intend on putting in work and time to add to it in the future.
 
 I am very proud of the work I have accomplished in this project as it was an opportunity to demonstrate my computer science skills to a standard of excellence that I strive for. The game allowed me to go above and beyond by incorporating the lessons taught in Computer Science 20, as well as techniques I had discovered through my own research. Looking ahead, I intend to continue improving my knowledge in computer science with a new-found passion, tackling personal projects and learning new coding languages.
+
+## Miscellaneous
+'grid, cell, nought, cross, player, line, diagonal, row, win, lose, tie…'
+
+'[Y] Yes  [A] Yes to All  [N] No  [L] No to All  [S] Suspend  [?] Help (default is "N")'
